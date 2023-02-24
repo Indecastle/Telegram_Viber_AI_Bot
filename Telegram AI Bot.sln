@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Telegram_AI_Bot.Api", "Telegram_AI_Bot.Api\Telegram_AI_Bot.Api.csproj", "{A7FBAE46-5CC6-4DEB-84C7-2B10D3897A47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Telegram_AI_Bot.Migrations", "Telegram_AI_Bot.Migrations\Telegram_AI_Bot.Migrations.csproj", "{D7FEA706-5661-4DD9-ADD5-E74746650492}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Telegram_AI_Bot.Infrastructure", "Telegram_AI_Bot.Infrastructure\Telegram_AI_Bot.Infrastructure.csproj", "{03484DDA-D666-465F-B1E2-DE57C5AE9488}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Telegram_AI_Bot.Core", "Telegram_AI_Bot.Core\Telegram_AI_Bot.Core.csproj", "{C01E2894-6138-4028-822D-EA041C721173}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Viber_AI_Bot.Api", "Viber_AI_Bot.Api\Viber_AI_Bot.Api.csproj", "{D9284AB0-5EE3-492E-85F1-A2BB6C4A9AA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Viber_AI_Bot.Migrations", "Viber_AI_Bot.Migrations\Viber_AI_Bot.Migrations.csproj", "{D529EE98-587C-4CE6-8F6C-9FC571CB41E0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A7FBAE46-5CC6-4DEB-84C7-2B10D3897A47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7FBAE46-5CC6-4DEB-84C7-2B10D3897A47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7FBAE46-5CC6-4DEB-84C7-2B10D3897A47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7FBAE46-5CC6-4DEB-84C7-2B10D3897A47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7FEA706-5661-4DD9-ADD5-E74746650492}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7FEA706-5661-4DD9-ADD5-E74746650492}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7FEA706-5661-4DD9-ADD5-E74746650492}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7FEA706-5661-4DD9-ADD5-E74746650492}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03484DDA-D666-465F-B1E2-DE57C5AE9488}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03484DDA-D666-465F-B1E2-DE57C5AE9488}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03484DDA-D666-465F-B1E2-DE57C5AE9488}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03484DDA-D666-465F-B1E2-DE57C5AE9488}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C01E2894-6138-4028-822D-EA041C721173}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C01E2894-6138-4028-822D-EA041C721173}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C01E2894-6138-4028-822D-EA041C721173}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C01E2894-6138-4028-822D-EA041C721173}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9284AB0-5EE3-492E-85F1-A2BB6C4A9AA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9284AB0-5EE3-492E-85F1-A2BB6C4A9AA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9284AB0-5EE3-492E-85F1-A2BB6C4A9AA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9284AB0-5EE3-492E-85F1-A2BB6C4A9AA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D529EE98-587C-4CE6-8F6C-9FC571CB41E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D529EE98-587C-4CE6-8F6C-9FC571CB41E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D529EE98-587C-4CE6-8F6C-9FC571CB41E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D529EE98-587C-4CE6-8F6C-9FC571CB41E0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
