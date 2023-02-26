@@ -62,6 +62,6 @@ public class ViberOpenAiService : IViberOpenAiService
     public async Task<string?> GetResult(InternalViberUser sender, ViberMessage.TextMessage message)
     {
         var result = await _openAiService.Handler(message.Text);
-        return "Test Text";
+        return result;
     }
 }

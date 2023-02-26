@@ -1,4 +1,5 @@
-﻿using MyTemplate.App.Core.Models.Types;
+﻿using MediatR;
+using MyTemplate.App.Core.Models.Types;
 using Telegram_AI_Bot.Core.Models.Types;
 
 namespace Telegram_AI_Bot.Core.Models.Viber.Users;
@@ -15,6 +16,8 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId
     public int Balance { get; protected set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
+    
+    public ICollection<INotification> Events { get; }
 
     public void SetName(string name)
     {

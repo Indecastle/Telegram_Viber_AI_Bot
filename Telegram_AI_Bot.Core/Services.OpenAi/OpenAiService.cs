@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Options;
 using OpenAI_API;
+using OpenAI_API.Completions;
+using OpenAI_API.Models;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Services.Viber.TextReceivedService;
@@ -30,7 +32,23 @@ public class OpenAiService : IOpenAiService
 
     public async Task<string?> Handler(string requestText)
     {
-        var result = await _api.Completions.GetCompletion(requestText);
-        return result;
+        var request = new CompletionRequest(
+            requestText,
+            model: Model.DavinciText,
+            temperature: 0.9,
+            frequencyPenalty: 0,
+            presencePenalty: 0.6,
+            top_p: 1,
+            max_tokens: 1000
+        );
+        request.BestOf = 1;
+
+        var result = await _api.Completions.CreateCompletionAsync(request);
+        // var tokens = result.Completions.Select(x => x.Logprobs?.TokenLogprobs).ToArray();
+        // var result = await _api.Completions.CreateCompletionAsync(
+        //     requestText,
+        //     model: Model.DavinciText, temperature: 0.9, max_tokens: 1000);
+
+        return result.ToString();
     }
 }

@@ -1,5 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
+using Telegram_AI_Bot.Core.Events.Domain.Common;
+using Telegram_AI_Bot.Core.Ports.Events;
 using Telegram_AI_Bot.Core.Services.BotReceivedMessage;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Services.Viber.OpenAi;
@@ -16,6 +19,8 @@ public static class CoreModule
         services
             .AddScoped<IBotOnMessageReceivedService, BotOnMessageReceivedService>();
 
+     
+            
         return services;
     }
     
@@ -32,5 +37,14 @@ public static class CoreModule
             .AddSingleton<IOpenAiService, OpenAiService>();
 
         return services;
+    }
+    
+    private static IServiceCollection AddEventPublishedDomainEventHandler<TEvent>(
+        this IServiceCollection services,
+        string topic)
+        where TEvent : INotification
+    {
+        return services.AddScoped<INotificationHandler<TEvent>>(sp =>
+            new EventPublisherDomainEventHandler<TEvent>(topic, sp.GetRequiredService<IEventPublisherPort>()));
     }
 }
