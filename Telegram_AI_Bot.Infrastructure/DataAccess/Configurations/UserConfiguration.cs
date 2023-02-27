@@ -16,6 +16,7 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
             e.Property(x => x.LastName).HasColumnName("LastName");
         });
 
+        builder.OwnsOne(x => x.SelectedMode, e => e.Property(x => x.Value).HasColumnName("SelectedMode"));
         builder.OwnsOne(x => x.Role, e => e.Property(x => x.Value).HasColumnName("Role"));
     }
 }

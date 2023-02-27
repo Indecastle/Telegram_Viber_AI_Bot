@@ -1,26 +1,27 @@
+using System.Globalization;
+using Askmethat.Aspnet.JsonLocalizer.Localizer;
+using Microsoft.Extensions.Localization;
+using Refit;
 using Telegram_AI_Bot.Core.Services.Viber.TextReceivedService;
 using Viber.Bot.NetCore.Models;
+using Viber.Bot.NetCore.RestApi;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 
 namespace Telegram_AI_Bot.Core.Viber;
 
 public static class ViberMessageHelper
 {
-    public const string DEFAULT_BUTTON_COLOR = "#666699";
-    
-    public static readonly ViberKeyboardButton BackToMainMenuButton = new()
-    {
-        Columns = 6,
-        Rows = 1,
-        BackgroundColor = DEFAULT_BUTTON_COLOR,
-        ActionType = "reply",
-        ActionBody = KeyboardCommands.MainMenu,
-        Text = "Вернуться в главное меню",
-        TextVerticalAlign = "middle",
-        TextHorizontalAlign = "center",
-        TextOpacity = 60,
-        TextSize = "regular"
-    };
+    public const string DEFAULT_BACKGROUND_BUTTON_COLOR = "#80aaff";
+    public const string DEFAULT_BACKGROUND_BUTTON_COLOR2 = "#2b64d4";
+
+    public static ViberKeyboardButton BackToPrevMenuButton(IJsonStringLocalizer localizer, string actionBody) =>
+        GetDefaultKeyboardButton(6, 1, localizer.GetString("Back"), actionBody,
+            backgroundColor: DEFAULT_BACKGROUND_BUTTON_COLOR2);
+
+    public static ViberKeyboardButton BackToMainMenuButton(IJsonStringLocalizer localizer) =>
+        GetDefaultKeyboardButton(6, 1, localizer.GetString("BackToMainMenu"), KeyboardCommands.MainMenu,
+            backgroundColor: DEFAULT_BACKGROUND_BUTTON_COLOR2);
+
 
     public static ViberMessage.TextMessage GetSimpleTextMessage(InternalViberUser sender, string text) =>
         new()
@@ -35,53 +36,67 @@ public static class ViberMessageHelper
         };
 
     public static ViberMessage.KeyboardMessage GetKeyboardMainMenuMessage(
+        IJsonStringLocalizer localizer,
         InternalViberUser sender,
-        string text = "Главное меню") =>
+        string text) =>
         GetDefaultKeyboardMessage(sender, text, GetDefaultKeyboard(new[]
         {
-            new ViberKeyboardButton()
-            {
-                Columns = 2,
-                Rows = 1,
-                BackgroundColor = DEFAULT_BUTTON_COLOR,
-                ActionType = "reply",
-                ActionBody = KeyboardCommands.Balance,
-                // Image = "https://i.imgur.com/BIZyTI4.png",
-                Text = "Balance",
-                TextVerticalAlign = "middle",
-                TextHorizontalAlign = "center",
-                TextOpacity = 60,
-                TextSize = "regular"
-            },
-            new ViberKeyboardButton()
-            {
-                Columns = 2,
-                Rows = 1,
-                BackgroundColor = DEFAULT_BUTTON_COLOR,
-                ActionType = "reply",
-                ActionBody = KeyboardCommands.Settings,
-                // Image = "https://i.imgur.com/BIZyTI4.png",
-                Text = "Settings",
-                TextVerticalAlign = "middle",
-                TextHorizontalAlign = "center",
-                TextOpacity = 60,
-                TextSize = "regular"
-            },
-            new ViberKeyboardButton()
-            {
-                Columns = 2,
-                Rows = 1,
-                BackgroundColor = DEFAULT_BUTTON_COLOR,
-                ActionType = "reply",
-                ActionBody = KeyboardCommands.Help,
-                // Image = "https://i.imgur.com/BIZyTI4.png",
-                Text = "Help",
-                TextVerticalAlign = "middle",
-                TextHorizontalAlign = "center",
-                TextOpacity = 60,
-                TextSize = "regular"
-            },
+            GetDefaultKeyboardButton(2, 3, localizer.GetString("BalanceTitle"), KeyboardCommands.Balance,
+                textVerticalAlign: "bottom",
+                textBackgroundGradientColor: "#004de6",
+                image: "https://i.imgur.com/nhZamZl.png"),
+            GetDefaultKeyboardButton(2, 3, localizer.GetString("Settings"), KeyboardCommands.Settings,
+                textVerticalAlign: "bottom",
+                textBackgroundGradientColor: "#004de6",
+                image: "https://i.imgur.com/lrsFUrb.png"),
+            GetDefaultKeyboardButton(2, 3, localizer.GetString("Help"), KeyboardCommands.Help,
+                textVerticalAlign: "bottom",
+                textBackgroundGradientColor: "#004de6",
+                image: "https://i.imgur.com/XJMJ4a1.png"),
         }));
+
+    public static ViberKeyboardButtonV6 GetDefaultKeyboardButton(
+        int columns,
+        int rows,
+        string text,
+        string actionBody,
+        string actionType = "reply",
+        string backgroundColor = DEFAULT_BACKGROUND_BUTTON_COLOR,
+        string? image = null,
+        string textVerticalAlign = "middle",
+        string textHorizontalAlign = "center",
+        string? textBackgroundGradientColor = null,
+        int textOpacity = 60,
+        string textSize = "large",
+        string? textColor = "#ffffff",
+        bool textShouldFit = false,
+        bool defaultFrame = true,
+        ViberKeyboardButtonFrame? frame = null) =>
+        new()
+        {
+            Columns = columns,
+            Rows = rows,
+            Text = textColor == null ? text : $"<font color='{textColor}'>{text}</font>",
+            ActionBody = actionBody,
+            ActionType = actionType,
+            BackgroundColor = backgroundColor,
+            Image = image,
+            ImageScaleType = "crop",
+            TextVerticalAlign = textVerticalAlign,
+            TextHorizontalAlign = textHorizontalAlign,
+            TextBackgroundGradientColor = textBackgroundGradientColor,
+            TextOpacity = textOpacity,
+            TextSize = textSize,
+            TextShouldFit = textShouldFit,
+            Frame = defaultFrame
+                ? frame ?? new()
+                {
+                    FrameBorderWidth = 1,
+                    FrameBorderColor = "#00ffcc",
+                    FrameCornerRadius = 5,
+                }
+                : frame,
+        };
 
     public static ViberMessage.KeyboardMessage GetDefaultKeyboardMessage(InternalViberUser sender, string text,
         ViberKeyboard keyboard) =>
@@ -90,7 +105,7 @@ public static class ViberMessageHelper
             Receiver = sender.Id,
             Sender = new InternalViberUser()
             {
-                Name = "Our bot",
+                Name = "Chat Bot",
                 Avatar = "https://i.imgur.com/K9SDD1X.png"
             },
             Text = text,
@@ -101,6 +116,32 @@ public static class ViberMessageHelper
     {
         DefaultHeight = false,
         // BackgroundColor = "#000066",
+        ButtonsGroupRows = 7,
         Buttons = buttons,
     };
+
+    public static void SetCulture(string language)
+    {
+        Thread.CurrentThread.CurrentUICulture = CultureInfo.GetCultureInfo(language);
+    }
+
+    public static void SetDefaultCulture(string senderLanguage)
+    {
+        var targetLang = senderLanguage switch
+        {
+            "RU" => "ru-RU",
+            "BY" => "ru-RU",
+            "UA" => "ru-RU",
+            _ => "en-US",
+        };
+
+        SetCulture(targetLang);
+    }
+
+    public static Task<ApiResponse<ViberResponse.SendMessageResponse>> SendMessageV6Async(this IViberBotApi api,
+        ViberMessage.MessageBase message)
+    {
+        message.MinApiVersion = 6;
+        return api.SendMessageAsync<ViberResponse.SendMessageResponse>(message);
+    }
 }

@@ -12,6 +12,7 @@ internal class ViberUserConfiguration : IEntityTypeConfiguration<ViberUser>
         {
             builder.ToTable("Users", schema: "viber");
 
+            builder.OwnsOne(x => x.SelectedMode, e => e.Property(x => x.Value).HasColumnName("SelectedMode"));
             builder.OwnsOne(x => x.Role, e => e.Property(x => x.Value).HasColumnName("Role"));
         }
     }

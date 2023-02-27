@@ -14,10 +14,11 @@ public class User : IEntity, IAggregatedRoot, IHasId
     public string UserId { get; protected set; }
     public Name Name { get; protected set; }
     public int Balance { get; protected set; }
+    public SelectedMode SelectedMode { get; protected set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
     
-    public ICollection<INotification> Events { get; }
+    public ICollection<INotification> Events { get; } = new List<INotification>();
 
     public void SetName(Name name)
     {

@@ -1,10 +1,9 @@
+using System.Globalization;
+using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
-using Quartz;
-using Telegram_AI_Bot.Core.Events;
-using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
-using Telegram_AI_Bot.Core.Ports.Events;
 using Telegram_AI_Bot.Core.Services.Viber.TextReceivedService;
 using Telegram_AI_Bot.Core.Viber;
 using Viber.Bot.NetCore.Infrastructure;
@@ -21,16 +20,19 @@ public class ViberController : ControllerBase
     private readonly ViberBotConfiguration _viberOptions;
     private readonly IViberTextReceivedService _textReceivedService;
     private readonly IViberUserRepository _userRepository;
+    private readonly IJsonStringLocalizer _localizer;
 
     public ViberController(
         IViberBotApi botClient,
         IOptions<ViberBotConfiguration> viberOptions,
         IViberTextReceivedService textReceivedService,
-        IViberUserRepository userRepository)
+        IViberUserRepository userRepository,
+        IJsonStringLocalizer<ViberController> localizer)
     {
         _botClient = botClient;
         _textReceivedService = textReceivedService;
         _userRepository = userRepository;
+        _localizer = localizer;
         _viberOptions = viberOptions.Value;
     }
 
@@ -53,47 +55,28 @@ public class ViberController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ViberCallbackData update)
     {
-        var str = String.Empty;
-        
-        // IScheduler scheduler = await _schedulerFactory.GetScheduler();
-        // // scheduler.Context.Clear();
-        // // scheduler.Context.Add("update", update);
-        //
-        // IDictionary<string, object> dataMap = new Dictionary<string, object>()
-        // {
-        //     ["update"] = update,
-        // };
-        // await scheduler.TriggerJob(new JobKey("PostEndpointJob"), new JobDataMap(dataMap));
-        
-
         if (update.Event == "conversation_started")
         {
-            var text = "Добро пожаловать";
-            var newMessage = ViberMessageHelper.GetKeyboardMainMenuMessage(update.User, text);
-            await _botClient.SendMessageAsync<ViberResponse.SendMessageResponse>(newMessage);
+            ViberMessageHelper.SetDefaultCulture(update.User.Country);
+            var text = _localizer.GetString("Welcome");
+            var newMessage = ViberMessageHelper.GetKeyboardMainMenuMessage(_localizer, update.User, text);
+            await _botClient.SendMessageV6Async(newMessage);
             return Ok();
         }
 
         if (update.Message == null)
             return Ok();
 
-        // DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeMilliseconds(update.Timestamp);
-        // var current = dateTimeOffset.ToUnixTimeSeconds();
-        // var old = update.Timestamp / 1000;
-        // if (old + 5 < current)
-        //     return BadRequest();
-
-        await _userRepository.CreateNewIfNotExistsAsync(update.Sender ?? update.User);
-        
-        
         try
         {
             return Ok();
         }
         finally
         {
+            var user = await _userRepository.GetOrCreateIfNotExistsAsync(update.Sender ?? update.User);
             Response.OnCompleted(async () =>
             {
+                ViberMessageHelper.SetCulture(user.Language);
                 Task handler = update.Message.Type switch
                 {
                     ViberMessageType.Video => throw new NotImplementedException(),

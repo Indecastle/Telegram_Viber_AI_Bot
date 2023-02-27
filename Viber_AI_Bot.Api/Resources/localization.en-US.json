@@ -1,0 +1,19 @@
+{
+  "Welcome": "Welcome to AI Bot",
+  "MainMenu": "Main menu",
+  "BalanceTitle": "Balance",
+  "Balance": "Balance:\n{0} requests left",
+  "NoBalance": "Not enough resources. \nTop up your balance",
+  "Settings": "Settings",
+  "Help": "Help",
+  "ChangeLanguage": "Change language",
+  "Russian": "Russian",
+  "English": "English",
+  "HelpText": "Chat bot using text-davinci-003 model.\nThis bot is currently in beta.",
+  "BackToMainMenu": "Back to main menu",
+  "Back": "Go back",
+  "SelectedMode_Chat": "Chat mode",
+  "SelectedMode_Image": "Image generation mode",
+  "DeleteContext": "Delete context",
+  "DeletedContext": "Context has been deleted"
+}

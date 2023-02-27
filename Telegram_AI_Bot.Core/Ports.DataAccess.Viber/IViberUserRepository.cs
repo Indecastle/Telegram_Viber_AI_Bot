@@ -8,7 +8,7 @@ public interface IViberUserRepository
 {
     Task AddAsync(ViberUser user);
     Task<bool> ExistsAsync(string userId);
-    Task<bool> CreateNewIfNotExistsAsync(InternalViberUser user);
+    Task<ViberUser> GetOrCreateIfNotExistsAsync(InternalViberUser user);
     Task<ViberUser> ByUserIdAsync(string userId);
     Task<ViberUser> ByIdAsync(Guid id);
     Task<ViberUser[]> ByIdAsync(IEnumerable<Guid> ids);

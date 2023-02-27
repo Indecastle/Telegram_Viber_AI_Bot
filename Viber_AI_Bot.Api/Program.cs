@@ -1,3 +1,7 @@
+using System.Globalization;
+using System.Text;
+using Askmethat.Aspnet.JsonLocalizer.Extensions;
+using Askmethat.Aspnet.JsonLocalizer.JsonOptions;
 using CorrelationId;
 using CorrelationId.DependencyInjection;
 using Microsoft.AspNetCore.Http.Json;
@@ -46,7 +50,22 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.WriteIndented = true;
 });
 
-builder.Services.AddDefaultCorrelationId(options => options.UpdateTraceIdentifier = true);
+builder.Services
+    .AddJsonLocalization(options =>
+    {
+        options.LocalizationMode = LocalizationMode.I18n;
+        options.UseBaseName = false;
+        options.IsAbsolutePath = false;
+        options.CacheDuration = TimeSpan.FromMinutes(15);
+        options.ResourcesPath = "Resources/";
+        options.FileEncoding = Encoding.GetEncoding("UTF-8");
+        options.SupportedCultureInfos = new HashSet<CultureInfo>()
+        {
+            new("en-US"),
+            new("ru-RU")
+        };
+    })
+    .AddDefaultCorrelationId(options => options.UpdateTraceIdentifier = true);
 
 builder.Services
     .AddViberDataAccess(builder.Configuration)

@@ -1,9 +1,15 @@
+using System.Globalization;
+using Askmethat.Aspnet.JsonLocalizer.Localizer;
+using Microsoft.Extensions.Localization;
+using Newtonsoft.Json;
+using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Viber;
 using Viber.Bot.NetCore.Models;
 using Viber.Bot.NetCore.RestApi;
 using static Viber.Bot.NetCore.Models.ViberMessage;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
+using ViberUser = Telegram_AI_Bot.Core.Models.Viber.Users.ViberUser;
 
 namespace Telegram_AI_Bot.Core.Services.Viber.TextReceivedService;
 
@@ -16,11 +22,16 @@ public class ViberKeyboardService : IViberKeyboardService
 {
     private readonly IViberBotApi _botClient;
     private readonly IViberUserRepository _userRepository;
+    private readonly IJsonStringLocalizer _localizer;
 
-    public ViberKeyboardService(IViberBotApi botClient, IViberUserRepository userRepository)
+    public ViberKeyboardService(
+        IViberBotApi botClient,
+        IViberUserRepository userRepository,
+        IJsonStringLocalizer localizer)
     {
         _botClient = botClient;
         _userRepository = userRepository;
+        _localizer = localizer;
     }
 
     
@@ -38,113 +49,112 @@ public class ViberKeyboardService : IViberKeyboardService
         if (!KeyboardCommands.All.Contains(command.ToLowerInvariant()))
             return;
 
+        var user = await _userRepository.ByUserIdAsync(sender.Id);
+        
         var action = command switch
         {
             KeyboardCommands.MainMenu => KeyboardMainMenu(sender, args),
             KeyboardCommands.Balance => KeyboardBalance(sender, args),
-            KeyboardCommands.Settings => KeyboardSettings(sender, args),
-            KeyboardCommands.Settings_SetLanguage => KeyboardSettingsLanguage(sender, args),
+            KeyboardCommands.Settings => KeyboardSettings(sender, user, args),
+            KeyboardCommands.Settings_SetLanguage => KeyboardSettingsLanguage(sender, user, args),
             KeyboardCommands.Help => KeyboardHelp(sender, args),
         };
 
         await action;
     }
-
     
-
     private async Task KeyboardMainMenu(InternalViberUser sender, string[] args)
     {
-        var menu = ViberMessageHelper.GetKeyboardMainMenuMessage(sender);
-
-        await _botClient.SendMessageAsync<ViberResponse.SendMessageResponse>(menu);
+        var menu = ViberMessageHelper.GetKeyboardMainMenuMessage(_localizer, sender, _localizer.GetString("MainMenu"));
+        // menu.MinApiVersion = 6;
+        await _botClient.SendMessageV6Async(menu);
     }
 
     private async Task KeyboardBalance(InternalViberUser sender, string[] args)
     {
         var storedUser = await _userRepository.ByUserIdAsync(sender.Id);
 
-        string text = string.Format("Баланс:\n" +
-                                    "Осталось {0} запросов", storedUser.Balance);
+        string text = _localizer.GetString("Balance", storedUser.Balance);
 
         var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, text, ViberMessageHelper.GetDefaultKeyboard(new[]
         {
-            ViberMessageHelper.BackToMainMenuButton
+            ViberMessageHelper.BackToMainMenuButton(_localizer)
         }));
 
-        await _botClient.SendMessageAsync<ViberResponse.SendMessageResponse>(newMessage);
+        await _botClient.SendMessageV6Async(newMessage);
     }
 
-    private async Task KeyboardSettings(InternalViberUser sender, string[] args)
+    private async Task KeyboardSettings(InternalViberUser sender, ViberUser user, string[] args)
     {
-        var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, "Настройки", ViberMessageHelper.GetDefaultKeyboard(new[]
+        var text = _localizer.GetString("Settings");
+        switch (args.FirstOrDefault())
         {
-            new ViberKeyboardButton()
-            {
-                Columns = 2,
-                Rows = 1,
-                BackgroundColor = ViberMessageHelper.DEFAULT_BUTTON_COLOR,
-                ActionType = "reply",
-                ActionBody = KeyboardCommands.Settings_SetLanguage,
-                Text = "Смена языка",
-                TextVerticalAlign = "middle",
-                TextHorizontalAlign = "center",
-                TextOpacity = 60,
-                TextSize = "regular"
-            },
-            ViberMessageHelper.BackToMainMenuButton,
-        }));
+            case "SwitchMode": user.SwitchMode();
+                break;
+            case "DeleteContext": 
+                user.DeleteContext();
+                text = _localizer.GetString("DeletedContext");
+                break;
+        }
 
-        await _botClient.SendMessageAsync<ViberResponse.SendMessageResponse>(newMessage);
+        string? gradientColor = user.SelectedMode == SelectedMode.Chat ? "#003cb3" : "#e63900";
+        
+        var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, text,
+            ViberMessageHelper.GetDefaultKeyboard(new[]
+            {
+                ViberMessageHelper.GetDefaultKeyboardButton(2, 2, _localizer.GetString("ChangeLanguage"),
+                    KeyboardCommands.Settings_SetLanguage,
+                    textVerticalAlign: "bottom",
+                    textBackgroundGradientColor: "#003cb3",
+                    image: "https://i.imgur.com/ATcqFri.png"),
+
+                ViberMessageHelper.GetDefaultKeyboardButton(2, 2, 
+                    _localizer.GetString("SelectedMode_" + user.SelectedMode.Value),
+                    KeyboardCommands.WithArgs(KeyboardCommands.Settings, "SwitchMode"),
+                    textVerticalAlign: "bottom",
+                    textBackgroundGradientColor: gradientColor,
+                    image: "https://i.imgur.com/RFxB3Wa.png"),
+                
+                ViberMessageHelper.GetDefaultKeyboardButton(2, 2, _localizer.GetString("DeleteContext"),
+                    KeyboardCommands.WithArgs(KeyboardCommands.Settings, "DeleteContext"),
+                    textVerticalAlign: "bottom",
+                    textBackgroundGradientColor: "#003cb3",
+                    image: "https://i.imgur.com/ATcqFri.png"),
+                
+                ViberMessageHelper.BackToMainMenuButton(_localizer),
+            }));
+
+        await _botClient.SendMessageV6Async(newMessage);
     }
 
-    private async Task KeyboardSettingsLanguage(InternalViberUser sender, string[] args)
+    private async Task KeyboardSettingsLanguage(InternalViberUser sender, ViberUser user, string[] args)
     {
-        var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, "Смена языка", ViberMessageHelper.GetDefaultKeyboard(new[]
+        if (args.Any())
         {
-            new ViberKeyboardButton()
-            {
-                Columns = 3,
-                Rows = 1,
-                BackgroundColor = ViberMessageHelper.DEFAULT_BUTTON_COLOR,
-                ActionType = "reply",
-                ActionBody = KeyboardCommands.Settings_SetLanguage + "ru",
-                Text = "Русский",
-                TextVerticalAlign = "middle",
-                TextHorizontalAlign = "center",
-                TextOpacity = 60,
-                TextSize = "regular"
-            },
-            new ViberKeyboardButton()
-            {
-                Columns = 3,
-                Rows = 1,
-                BackgroundColor = ViberMessageHelper.DEFAULT_BUTTON_COLOR,
-                ActionType = "reply",
-                ActionBody = KeyboardCommands.Settings_SetLanguage + "en",
-                Text = "Английский",
-                TextVerticalAlign = "middle",
-                TextHorizontalAlign = "center",
-                TextOpacity = 60,
-                TextSize = "regular"
-            },
-            ViberMessageHelper.BackToMainMenuButton,
-        }));
+            user.SetLanguage(args.First());
+            ViberMessageHelper.SetCulture(user.Language);
+        }
 
-        await _botClient.SendMessageAsync<ViberResponse.SendMessageResponse>(newMessage);
+        var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, _localizer.GetString("ChangeLanguage"),
+            ViberMessageHelper.GetDefaultKeyboard(new[]
+            {
+                ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("Russian"),
+                    KeyboardCommands.WithArgs(KeyboardCommands.Settings_SetLanguage, "ru-RU")),
+                ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("English"),
+                    KeyboardCommands.WithArgs(KeyboardCommands.Settings_SetLanguage, "en-US")),
+                ViberMessageHelper.BackToPrevMenuButton(_localizer, KeyboardCommands.Settings),
+            }));
+
+        await _botClient.SendMessageV6Async(newMessage);
     }
 
     private async Task KeyboardHelp(InternalViberUser sender, string[] args)
     {
-        const string helpText = "Help:\n" +
-                                "Чат бот проксирующий запросы в настоящий ChatGPT\n" +
-                                "Этот бот пока является бета версией\n" +
-                                "--mainmenu   - главное меню\n";
-
-        var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, helpText, ViberMessageHelper.GetDefaultKeyboard(new[]
+        var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, _localizer.GetString("HelpText"), ViberMessageHelper.GetDefaultKeyboard(new[]
         {
-            ViberMessageHelper.BackToMainMenuButton,
+            ViberMessageHelper.BackToMainMenuButton(_localizer),
         }));
 
-        await _botClient.SendMessageAsync<ViberResponse.SendMessageResponse>(newMessage);
+        await _botClient.SendMessageV6Async(newMessage);
     }
 }

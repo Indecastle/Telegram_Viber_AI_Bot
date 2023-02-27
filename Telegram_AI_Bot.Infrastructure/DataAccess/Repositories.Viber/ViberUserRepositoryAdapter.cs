@@ -3,6 +3,7 @@ using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Models.Viber.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
+using Telegram_AI_Bot.Core.Viber;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 using Webinex.Coded;
 
@@ -10,7 +11,7 @@ namespace Telegram_AI_Bot.Infrastructure.DataAccess.Repositories.Viber;
 
 internal class ViberUserRepositoryAdapter : IViberUserRepository
 {
-    public const int FREE_START_BALANCE = 20;
+    public const int FREE_START_BALANCE = 10;
     
     private readonly AppDbContext _dbContext;
 
@@ -29,16 +30,21 @@ internal class ViberUserRepositoryAdapter : IViberUserRepository
         return await _dbContext.ViberUser.AnyAsync(x => x.UserId == userId);
     }
 
-    public async Task<bool> CreateNewIfNotExistsAsync(InternalViberUser user)
+    public async Task<ViberUser> GetOrCreateIfNotExistsAsync(InternalViberUser internalUser)
     {
-        if (!await ExistsAsync(user.Id))
+        var user = await _dbContext.ViberUser.FirstOrDefaultAsync(x => x.UserId == internalUser.Id);
+        if (user == null)
         {
-            await _dbContext.ViberUser.AddAsync(await ViberUser.NewClientAsync(user.Id, user.Name, FREE_START_BALANCE));
+            ViberMessageHelper.SetDefaultCulture(internalUser.Country);
+            var lang = Thread.CurrentThread.CurrentUICulture.Name;
+            var entryEntity = await _dbContext.ViberUser.AddAsync(
+                await ViberUser.NewClientAsync(internalUser.Id, internalUser.Name, lang, FREE_START_BALANCE));
+
             await _dbContext.SaveChangesAsync();
-            return true;
+            return entryEntity.Entity;
         }
 
-        return false;
+        return user;
     }
 
     public async Task<ViberUser> ByIdAsync(Guid id)
