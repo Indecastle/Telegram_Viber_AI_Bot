@@ -11,13 +11,9 @@ namespace Viber_AI_Bot.Api.Controllers;
 [ApiController]
 public class MainController : ControllerBase
 {
-    private readonly IViberBotApi _viberBotApi;
-    private readonly ViberBotConfiguration _viberOptions;
-
-    public MainController(IViberBotApi viberBotApi, IOptions<ViberBotConfiguration> viberOptions)
+    
+    public MainController()
     {
-        _viberBotApi = viberBotApi;
-        _viberOptions = viberOptions.Value;
     }
 
     // The service sets a webhook automatically, but if you want sets him manually then use this

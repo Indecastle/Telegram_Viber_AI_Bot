@@ -1,4 +1,3 @@
-using System.Globalization;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;

@@ -68,8 +68,8 @@ public class ViberTextReceivedService : IViberTextReceivedService
             Sender = new ViberUser.User()
             {
                 //required
-                Name = "Our bot",
-                Avatar = "https://i.imgur.com/K9SDD1X.png"
+                Name = "Chat bot",
+                // Avatar = "https://i.imgur.com/K9SDD1X.png"
             },
             //required
             Text = usage

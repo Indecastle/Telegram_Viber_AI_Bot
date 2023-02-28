@@ -1,10 +1,10 @@
-using System.Globalization;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
-using Newtonsoft.Json;
+using Microsoft.Extensions.Options;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Viber;
+using Telegram_AI_Bot.Core.Viber.Options;
 using Viber.Bot.NetCore.Models;
 using Viber.Bot.NetCore.RestApi;
 using static Viber.Bot.NetCore.Models.ViberMessage;
@@ -23,15 +23,18 @@ public class ViberKeyboardService : IViberKeyboardService
     private readonly IViberBotApi _botClient;
     private readonly IViberUserRepository _userRepository;
     private readonly IJsonStringLocalizer _localizer;
+    private readonly ViberBotConfiguration _viberOptions;
 
     public ViberKeyboardService(
         IViberBotApi botClient,
         IViberUserRepository userRepository,
-        IJsonStringLocalizer localizer)
+        IJsonStringLocalizer localizer,
+        IOptions<ViberBotConfiguration> viberOptions)
     {
         _botClient = botClient;
         _userRepository = userRepository;
         _localizer = localizer;
+        _viberOptions = viberOptions.Value;
     }
 
     
@@ -45,7 +48,6 @@ public class ViberKeyboardService : IViberKeyboardService
         string command = args[0];
         args = args.Skip(1).ToArray();
 
-        // if (!text.StartsWith("--") || text.Substring("--".Length) is not { } command || !KeyboardCommands.All.Contains(command))
         if (!KeyboardCommands.All.Contains(command.ToLowerInvariant()))
             return;
 
@@ -57,12 +59,12 @@ public class ViberKeyboardService : IViberKeyboardService
             KeyboardCommands.Balance => KeyboardBalance(sender, args),
             KeyboardCommands.Settings => KeyboardSettings(sender, user, args),
             KeyboardCommands.Settings_SetLanguage => KeyboardSettingsLanguage(sender, user, args),
-            KeyboardCommands.Help => KeyboardHelp(sender, args),
+            KeyboardCommands.Help => KeyboardHelp(sender, user, args),
         };
 
         await action;
     }
-    
+
     private async Task KeyboardMainMenu(InternalViberUser sender, string[] args)
     {
         var menu = ViberMessageHelper.GetKeyboardMainMenuMessage(_localizer, sender, _localizer.GetString("MainMenu"));
@@ -149,12 +151,32 @@ public class ViberKeyboardService : IViberKeyboardService
         await _botClient.SendMessageV6Async(newMessage);
     }
 
-    private async Task KeyboardHelp(InternalViberUser sender, string[] args)
+    private async Task KeyboardHelp(InternalViberUser sender, ViberUser user, string[] args)
     {
         var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, _localizer.GetString("HelpText"), ViberMessageHelper.GetDefaultKeyboard(new[]
         {
+            ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("GetContact"),
+                KeyboardCommands.WithArgs(KeyboardCommands.Help, "GetAdminContact")),
+            ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("MyId"),
+                KeyboardCommands.WithArgs(KeyboardCommands.Help, "MyId")),
             ViberMessageHelper.BackToMainMenuButton(_localizer),
         }));
+        
+        switch (args.FirstOrDefault())
+        {
+            case "GetAdminContact":
+                var contactMessage = new ViberContactMessageV6(newMessage);
+                contactMessage.Contact = new()
+                {
+                    Name = "Owner",
+                    PhoneNumber = _viberOptions.AdminPhoneNumber
+                };
+                await _botClient.SendMessageV6Async(contactMessage);
+                return;
+            case "MyId": 
+                newMessage.Text = user.UserId;
+                break;
+        }
 
         await _botClient.SendMessageV6Async(newMessage);
     }

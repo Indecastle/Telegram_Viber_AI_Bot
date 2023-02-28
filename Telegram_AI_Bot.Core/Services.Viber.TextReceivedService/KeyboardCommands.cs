@@ -6,7 +6,6 @@ public static class KeyboardCommands
     public const string Balance = "--balance";
     public const string Settings = "--settings";
     public const string Settings_SetLanguage = "--settings_set_language";
-    // public const string Settings_ChangeMode = "--settings_change_mode";
     public const string Help = "--help";
 
     public static readonly string[] All =

@@ -19,17 +19,9 @@ public interface IOpenAiService
 
 public class OpenAiService : IOpenAiService
 {
-    private readonly Regex rg = new Regex(@".*: *");
-    
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
-    private const string Template0 =
-        "The following is a conversation with an AI assistant. The assistant is helpful, creative, clever and very friendly.\n\n";
-
-    private const string Template1 = "You:";
     private const string Template =
-        @"The following is a conversation with an AI assistant. The assistant is helpful, creative, clever and very friendly.
-You: {0}
-AI:";
+        "The following is a conversation with an AI assistant. The assistant is helpful, creative, clever and very friendly.\n\n";
 
     private readonly OpenAiConfiguration _openAiptions;
     private readonly OpenAIAPI _api;
@@ -43,13 +35,14 @@ AI:";
 
     public async Task<string?> ChatHandler(string requestText, ViberUser user)
     {
+        var now = DateTimeOffset.UtcNow;
         requestText = requestText.Trim();
 
         var stringBuilder = new StringBuilder();
 
-        stringBuilder.Append(Template0);
+        stringBuilder.Append(Template);
         
-        foreach (var message in user.Messages)
+        foreach (var message in user.Messages.OrderBy(x => x.CreatedAt))
         {
             var who = message.IsMe ? "You: " : "AI: ";
             stringBuilder.Append( $"{who}{message.Text}\n");
@@ -73,8 +66,8 @@ AI:";
 
         var text = result.ToString().Trim();
         
-        user.AddMessage(requestText, true);
-        user.AddMessage(text, false);
+        user.AddMessage(requestText, true, now);
+        user.AddMessage(text, false, now);
         user.RemoveUnnecessary();
         
         return text;

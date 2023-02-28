@@ -3,7 +3,7 @@
   "MainMenu": "Main menu",
   "BalanceTitle": "Balance",
   "Balance": "Balance:\n{0} requests left",
-  "NoBalance": "Not enough resources. \nTop up your balance",
+  "NoBalance": "Not enough resources.\nContact the owner to top up your balance.",
   "Settings": "Settings",
   "Help": "Help",
   "ChangeLanguage": "Change language",
@@ -15,5 +15,7 @@
   "SelectedMode_Chat": "Chat mode",
   "SelectedMode_Image": "Image generation mode",
   "DeleteContext": "Delete context",
-  "DeletedContext": "Context has been deleted"
+  "DeletedContext": "Context has been deleted",
+  "GetContact": "Owner's contact",
+  "MyId": "My ID"
 }

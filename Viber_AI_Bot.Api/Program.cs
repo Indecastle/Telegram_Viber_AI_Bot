@@ -6,12 +6,10 @@ using CorrelationId;
 using CorrelationId.DependencyInjection;
 using Microsoft.AspNetCore.Http.Json;
 using Viber.Bot.NetCore.Middleware;
-using Newtonsoft.Json;
-using Quartz;
 using Telegram_AI_Bot.Core;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram_AI_Bot.Core.Viber.Options;
 using Telegram_AI_Bot.Infrastructure;
-using Viber_AI_Bot.Api.QuartzJobs;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true);
@@ -90,14 +88,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-
-public class ViberBotConfiguration
-{
-    public static readonly string Configuration = "ViberBot";
-
-    public string Webhook { get; set; } = "";
-}
 
 
 // curl -# -i -g -H "X-Viber-Auth-Token:TOKEN " -d @viber.json -X POST https://chatapi.viber.com/pa/set_webhook -v

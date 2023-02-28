@@ -110,9 +110,9 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId
         _messages.Clear();
     }
 
-    public void AddMessage(string text, bool isMe)
+    public void AddMessage(string text, bool isMe, DateTimeOffset time)
     {
-        _messages.Add(new OpenAiMessage(new Guid(), text, isMe, DateTimeOffset.UtcNow));
+        _messages.Add(new OpenAiMessage(new Guid(), text, isMe, time));
     }
     
     public void RemoveUnnecessary()

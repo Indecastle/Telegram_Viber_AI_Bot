@@ -97,7 +97,7 @@ public static class ViberMessageHelper
                 : frame,
         };
 
-    public static ViberMessage.KeyboardMessage GetDefaultKeyboardMessage(InternalViberUser sender, string text,
+    public static ViberKeyboardMessageV6 GetDefaultKeyboardMessage(InternalViberUser sender, string text,
         ViberKeyboard keyboard) =>
         new()
         {
@@ -105,7 +105,6 @@ public static class ViberMessageHelper
             Sender = new InternalViberUser()
             {
                 Name = "Chat Bot",
-                Avatar = "https://i.imgur.com/K9SDD1X.png"
             },
             Text = text,
             Keyboard = keyboard
