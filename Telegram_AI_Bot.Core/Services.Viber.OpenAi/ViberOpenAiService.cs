@@ -1,5 +1,6 @@
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
+using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Services.OpenAi;
@@ -49,19 +50,33 @@ public class ViberOpenAiService : IViberOpenAiService
             return;
         }
 
-        var textResult = await GetResult(sender, message);
+        if (storedUser.SelectedMode == SelectedMode.Chat)
+        {
+            var textResult = await _openAiService.ChatHandler(message.Text, storedUser);
 
-        if (!string.IsNullOrEmpty(textResult))
-            await _unitOfWork.CommitAsync();
-        
-        newMessage.Text = string.IsNullOrEmpty(textResult) ? "bad request" : textResult;
+            if (!string.IsNullOrEmpty(textResult))
+                await _unitOfWork.CommitAsync();
 
-        await _botClient.SendMessageV6Async(newMessage);
-    }
+            newMessage.Text = string.IsNullOrEmpty(textResult) ? "bad request" : textResult;
 
-    private async Task<string?> GetResult(InternalViberUser sender, ViberMessage.TextMessage message)
-    {
-        var result = await _openAiService.Handler(message.Text);
-        return result;
+            await _botClient.SendMessageV6Async(newMessage);
+        }
+        else
+        {
+            var url = await _openAiService.ImageHandler(message.Text, storedUser);
+            
+            await _botClient.SendMessageV6Async(new ViberPictureMessageV6
+            {
+                Receiver = sender.Id,
+                Sender = new InternalViberUser()
+                {
+                    Name = "Chat bot",
+                },
+                Text = message.Text,
+                Media = url,
+                // Thumbnail = "https://i.imgur.com/4Qe65rF.png",
+                Keyboard = newMessage.Keyboard
+            });
+        }
     }
 }

@@ -29,8 +29,7 @@ public static class ViberMessageHelper
             Receiver = sender.Id,
             Sender = new InternalViberUser()
             {
-                Name = "Our bot",
-                Avatar = "https://i.imgur.com/K9SDD1X.png"
+                Name = "Chat bot",
             },
             Text = text,
         };
@@ -138,10 +137,19 @@ public static class ViberMessageHelper
         SetCulture(targetLang);
     }
 
-    public static Task<ApiResponse<ViberResponse.SendMessageResponse>> SendMessageV6Async(this IViberBotApi api,
+    public static async Task<ApiResponse<ViberResponse.SendMessageResponse>> SendMessageV6Async(this IViberBotApi api,
         ViberMessage.MessageBase message)
     {
         message.MinApiVersion = 6;
-        return api.SendMessageAsync<ViberResponse.SendMessageResponse>(message);
+        
+        ApiResponse<ViberResponse.SendMessageResponse> result = default!;
+        for (int i = 0; i < 3; i++)
+        {
+            result = await api.SendMessageAsync<ViberResponse.SendMessageResponse>(message);
+            if (result.IsSuccessStatusCode)
+                break;
+        }
+
+        return result;
     }
 }

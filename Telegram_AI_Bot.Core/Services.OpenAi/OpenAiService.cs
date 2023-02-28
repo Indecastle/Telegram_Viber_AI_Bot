@@ -1,15 +1,20 @@
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using OpenAI_API;
 using OpenAI_API.Completions;
 using OpenAI_API.Models;
+using Telegram_AI_Bot.Core.Models.Viber.Users;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 
 namespace Telegram_AI_Bot.Core.Services.OpenAi;
 
 public interface IOpenAiService
 {
-    Task<string?> Handler(string requestText);
+    Task<string?> ChatHandler(string requestText, ViberUser user);
+    Task<string?> ImageHandler(string requestText, ViberUser user);
 }
 
 public class OpenAiService : IOpenAiService
@@ -17,6 +22,10 @@ public class OpenAiService : IOpenAiService
     private readonly Regex rg = new Regex(@".*: *");
     
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
+    private const string Template0 =
+        "The following is a conversation with an AI assistant. The assistant is helpful, creative, clever and very friendly.\n\n";
+
+    private const string Template1 = "You:";
     private const string Template =
         @"The following is a conversation with an AI assistant. The assistant is helpful, creative, clever and very friendly.
 You: {0}
@@ -32,10 +41,24 @@ AI:";
         _api = new OpenAIAPI(_openAiptions.Token);
     }
 
-    public async Task<string?> Handler(string requestText)
+    public async Task<string?> ChatHandler(string requestText, ViberUser user)
     {
+        requestText = requestText.Trim();
+
+        var stringBuilder = new StringBuilder();
+
+        stringBuilder.Append(Template0);
+        
+        foreach (var message in user.Messages)
+        {
+            var who = message.IsMe ? "You: " : "AI: ";
+            stringBuilder.Append( $"{who}{message.Text}\n");
+        }
+        
+        stringBuilder.Append( $"You: {requestText}\nAI: ");
+
         var request = new CompletionRequest(
-            string.Format(Template, requestText),
+            stringBuilder.ToString(),
             model: Model.DavinciText,
             temperature: 0.9,
             frequencyPenalty: 0,
@@ -47,14 +70,65 @@ AI:";
         request.BestOf = 1;
 
         var result = await _api.Completions.CreateCompletionAsync(request);
-        // var tokens = result.Completions.Select(x => x.Logprobs?.TokenLogprobs).ToArray();
-        // var result = await _api.Completions.CreateCompletionAsync(
-        //     requestText,
-        //     model: Model.DavinciText, temperature: 0.9, max_tokens: 1000);
-        
+
         var text = result.ToString().Trim();
-        // var match = rg.Match(text);
-        // text = text.Substring(match.Index + match.Length);
-        return text.Trim();
+        
+        user.AddMessage(requestText, true);
+        user.AddMessage(text, false);
+        user.RemoveUnnecessary();
+        
+        return text;
+    }
+
+    public async Task<string?> ImageHandler(string requestText, ViberUser user)
+    {
+        var images = await GetImages(new()
+        {
+            prompt = requestText.Trim(),
+            n = 1,
+            size = "512x512"
+        });
+
+        return images.FirstOrDefault();
+    }
+    
+    private async Task<string[]> GetImages(DalleInput input)
+    {
+        ResponseModel resp = new();
+        using (var client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", _openAiptions.Token);
+            var Message = await client.PostAsync("https://api.openai.com/v1/images/generations",
+                new StringContent(JsonConvert.SerializeObject(input),
+                    Encoding.UTF8, "application/json"));
+            if (Message.IsSuccessStatusCode)
+            {
+                var content = await Message.Content.ReadAsStringAsync();
+                resp = JsonConvert.DeserializeObject<ResponseModel>(content);
+            }
+        }
+
+        return resp?.data?.Select(x => x.url ?? string.Empty).ToArray() ?? Array.Empty<string>();
+    }
+    
+    public class DalleInput
+    {
+        public string? prompt { get; set; }
+        public short? n { get; set; }
+        public string? size { get; set; }
+    }
+    
+    private class Link
+    {
+        public string? url { get; set; }
+    }
+
+    // model for the DALL E api response
+    private class ResponseModel
+    {
+        public long created { get; set; }
+        public List<Link>? data { get; set; }
     }
 }

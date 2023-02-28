@@ -15,6 +15,13 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
             e.Property(x => x.FirstName).HasColumnName("FirstName");
             e.Property(x => x.LastName).HasColumnName("LastName");
         });
+        
+        builder.OwnsMany(x => x.Messages, o =>
+        {
+            o.WithOwner().HasForeignKey("UserId");
+            o.ToTable("Users_OpenAiMessages");
+            o.HasKey(x => x.Id);
+        });
 
         builder.OwnsOne(x => x.SelectedMode, e => e.Property(x => x.Value).HasColumnName("SelectedMode"));
         builder.OwnsOne(x => x.Role, e => e.Property(x => x.Value).HasColumnName("Role"));

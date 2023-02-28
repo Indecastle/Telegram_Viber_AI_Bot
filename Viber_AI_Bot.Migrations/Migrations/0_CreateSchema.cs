@@ -30,7 +30,16 @@ public class AddUsersTable : Migration
                 .NotNullable())
             .WithColumn("Avatar", x=> x
                 .AsString(250)
-                .Nullable());
+                .Nullable())
+            .WithColumn("Balance", x => x
+                .AsInt32()
+                .NotNullable())
+            .WithColumn("Language", x => x
+                .AsString(10)
+                .NotNullable())
+            .WithColumn("SelectedMode", x => x
+                .AsString(20)
+                .NotNullable());
     }
 
     public override void Down()

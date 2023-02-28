@@ -55,7 +55,7 @@ internal class ViberUserRepositoryAdapter : IViberUserRepository
     
     public async Task<ViberUser> ByUserIdAsync(string userId)
     {
-        return await _dbContext.ViberUser.FirstOrDefaultAsync(x => x.UserId == userId)
+        return await _dbContext.ViberUser.Include(x => x.Messages).FirstOrDefaultAsync(x => x.UserId == userId)
                ?? throw CodedException.NotFound(userId);
     }
 

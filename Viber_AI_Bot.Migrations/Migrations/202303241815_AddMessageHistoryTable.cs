@@ -10,13 +10,15 @@ public class AddColumnsToUsersTable : Migration
     {
         Create
             .Table("Users_OpenAiMessages")
+            .InSchema("viber")
             .WithColumn("Id", x => x
                 .AsGuid()
                 .NotNullable()
                 .PrimaryKey())
             .WithColumn("UserId", x => x
                 .AsGuid()
-                .ForeignKey("Users", "Id"))
+                .ForeignKey("FK_Users_OpenAiMessages_UserId_viber.Users_Id", "viber", "Users", "Id")
+                .NotNullable())
             .WithColumn("Text", x => x
                 .AsString(1000)
                 .NotNullable())
@@ -26,11 +28,11 @@ public class AddColumnsToUsersTable : Migration
             .WithColumn("CreatedAt", x => x
                 .AsDateTimeOffset()
                 .NotNullable());
-            
+
     }
-    
+
     public override void Down()
     {
-        Delete.Table("Users_OpenAiMessages");
+        Delete.Table("Users_OpenAiMessages").InSchema("viber");
     }
 }

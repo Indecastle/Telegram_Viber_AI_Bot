@@ -102,24 +102,25 @@ public class ViberKeyboardService : IViberKeyboardService
         var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, text,
             ViberMessageHelper.GetDefaultKeyboard(new[]
             {
-                ViberMessageHelper.GetDefaultKeyboardButton(2, 2, _localizer.GetString("ChangeLanguage"),
+                ViberMessageHelper.GetDefaultKeyboardButton(2, 3, _localizer.GetString("ChangeLanguage"),
                     KeyboardCommands.Settings_SetLanguage,
                     textVerticalAlign: "bottom",
                     textBackgroundGradientColor: "#003cb3",
                     image: "https://i.imgur.com/ATcqFri.png"),
 
-                ViberMessageHelper.GetDefaultKeyboardButton(2, 2, 
+                ViberMessageHelper.GetDefaultKeyboardButton(2, 3, 
                     _localizer.GetString("SelectedMode_" + user.SelectedMode.Value),
                     KeyboardCommands.WithArgs(KeyboardCommands.Settings, "SwitchMode"),
                     textVerticalAlign: "bottom",
+                    textSize: "regular",
                     textBackgroundGradientColor: gradientColor,
                     image: "https://i.imgur.com/RFxB3Wa.png"),
                 
-                ViberMessageHelper.GetDefaultKeyboardButton(2, 2, _localizer.GetString("DeleteContext"),
+                ViberMessageHelper.GetDefaultKeyboardButton(2, 3, _localizer.GetString("DeleteContext"),
                     KeyboardCommands.WithArgs(KeyboardCommands.Settings, "DeleteContext"),
                     textVerticalAlign: "bottom",
                     textBackgroundGradientColor: "#003cb3",
-                    image: "https://i.imgur.com/ATcqFri.png"),
+                    image: "https://i.imgur.com/4Qe65rF.png"),
                 
                 ViberMessageHelper.BackToMainMenuButton(_localizer),
             }));

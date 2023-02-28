@@ -6,6 +6,8 @@ namespace Telegram_AI_Bot.Core.Models.Users;
 
 public class User : IEntity, IAggregatedRoot, IHasId
 {
+    protected readonly List<OpenAiMessage> _messages = new();
+
     protected User()
     {
     }
@@ -18,6 +20,7 @@ public class User : IEntity, IAggregatedRoot, IHasId
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
     
+    public IReadOnlyCollection<OpenAiMessage> Messages => _messages.AsReadOnly();
     public ICollection<INotification> Events { get; } = new List<INotification>();
 
     public void SetName(Name name)
