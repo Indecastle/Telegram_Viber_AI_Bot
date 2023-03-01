@@ -41,11 +41,11 @@ public class OpenAiService : IOpenAiService
         var stringBuilder = new StringBuilder();
 
         stringBuilder.Append(Template);
-        
-        foreach (var message in user.Messages.OrderBy(x => x.CreatedAt))
+
+        foreach (var message in user.Messages.OrderBy(x => x.CreatedAt).TakeWhile(x => x.CreatedAt < now))
         {
             var who = message.IsMe ? "You: " : "AI: ";
-            stringBuilder.Append( $"{who}{message.Text}\n");
+            stringBuilder.Append($"{who}{message.Text}\n");
         }
         
         stringBuilder.Append( $"You: {requestText}\nAI: ");
