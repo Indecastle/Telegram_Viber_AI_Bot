@@ -1,10 +1,11 @@
 ﻿using MediatR;
 using MyTemplate.App.Core.Models.Types;
 using Telegram_AI_Bot.Core.Models.Types;
+using Telegram_AI_Bot.Core.Services.OpenAi;
 
 namespace Telegram_AI_Bot.Core.Models.Viber.Users;
 
-public class ViberUser : IEntity, IAggregatedRoot, IHasId
+public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
 {
     private const int MAX_STORED_MESSAGES = 10;
 
