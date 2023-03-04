@@ -10,6 +10,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Askmethat.Aspnet.JsonLocalizer" Version="4.0.1" />
+      <PackageReference Include="CorrelationId" Version="3.0.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
       <PackageReference Include="OpenAI-DotNet" Version="5.0.0" />
@@ -19,6 +22,16 @@
     <ItemGroup>
       <Content Include="appsettings.Personal.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="Resources\localization.en-US.json">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+      <Content Include="Resources\localization.ru-RU.json">
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       </Content>
       <None Remove="appsettings.json" />
       <Content Include="appsettings.json">

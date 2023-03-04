@@ -1,5 +1,7 @@
 ﻿using MediatR;
 using MyTemplate.App.Core.Models.Types;
+using OpenAI.Images;
+using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 
@@ -7,8 +9,6 @@ namespace Telegram_AI_Bot.Core.Models.Viber.Users;
 
 public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
 {
-    private const int MAX_STORED_MESSAGES = 10;
-
     protected readonly List<OpenAiMessage> _messages = new();
     
     protected ViberUser()
@@ -97,13 +97,9 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         return user;
     }
 
-    public bool TryDecrementBalance(int amount = 1)
+    public bool IsPositiveBalance()
     {
-        if (Balance == 0 || Balance < amount)
-            return false;
-        
-        Balance -= amount;
-        return true;
+        return Balance > 0;
     }
 
     public void DeleteContext()
@@ -118,12 +114,29 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     
     public void RemoveUnnecessary()
     {
-        if (_messages.Count <= MAX_STORED_MESSAGES)
+        if (_messages.Count <= Constants.MAX_STORED_MESSAGES)
             return;
         
-        foreach (var message in _messages.OrderBy(x => x.CreatedAt).Take(_messages.Count - MAX_STORED_MESSAGES))
+        foreach (var message in _messages.OrderBy(x => x.CreatedAt).Take(_messages.Count - Constants.MAX_STORED_MESSAGES))
         {
             _messages.Remove(message);
         }
+    }
+
+    public void ReduceChatTokens(int tokens)
+    {
+        Balance -= tokens;
+        Balance = Balance < 0 ? 0 : Balance;
+    }
+
+    public void ReduceImageTokens(ImageSize imageSize, OpenAiConfiguration openAiOptions)
+    {
+        Balance -= openAiOptions.Factor!.Value * imageSize switch
+        {
+            ImageSize.Small => openAiOptions.ImageSmallTokens!.Value,
+            ImageSize.Medium => openAiOptions.ImageMediumTokens!.Value,
+            ImageSize.Large => openAiOptions.ImageLargeTokens!.Value,
+        };
+        Balance = Balance < 0 ? 0 : Balance;
     }
 }

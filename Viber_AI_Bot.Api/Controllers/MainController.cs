@@ -1,9 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using Microsoft.Net.Http.Headers;
-using Viber.Bot.NetCore.Infrastructure;
-using Viber.Bot.NetCore.Models;
-using Viber.Bot.NetCore.RestApi;
 
 namespace Viber_AI_Bot.Api.Controllers;
 

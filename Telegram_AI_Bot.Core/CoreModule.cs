@@ -12,7 +12,7 @@ namespace Telegram_AI_Bot.Core;
 
 public static class CoreModule
 {
-    public static IServiceCollection AddCoreModule(this IServiceCollection services)
+    public static IServiceCollection AddTelegramCoreModule(this IServiceCollection services)
     {
         services = services ?? throw new ArgumentNullException(nameof(services));
         

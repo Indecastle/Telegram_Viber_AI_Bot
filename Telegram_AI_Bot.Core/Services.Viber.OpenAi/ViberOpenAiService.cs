@@ -41,10 +41,10 @@ public class ViberOpenAiService : IViberOpenAiService
     public async Task Handler(InternalViberUser sender, ViberMessage.TextMessage message)
     {
         var newMessage = ViberMessageHelper.GetKeyboardMainMenuMessage(_localizer, sender, "");
-        
+
         var storedUser = await _userRepository.ByUserIdAsync(sender.Id);
-        if (!storedUser.TryDecrementBalance())
-        {   
+        if (!storedUser.IsPositiveBalance())
+        {
             newMessage.Text = _localizer.GetString("NoBalance");
             await _botClient.SendMessageV6Async(newMessage);
             return;
@@ -64,11 +64,11 @@ public class ViberOpenAiService : IViberOpenAiService
         else
         {
             var url = await _openAiService.ImageHandler(message.Text, storedUser);
-            
+
             await _botClient.SendMessageV6Async(new ViberPictureMessageV6
             {
                 Receiver = sender.Id,
-                Sender = new InternalViberUser()
+                Sender = new InternalViberUser
                 {
                     Name = "Chat bot",
                 },

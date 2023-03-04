@@ -1,3 +1,4 @@
+using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -13,15 +14,18 @@ public class UpdateHandler : IUpdateHandler
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<UpdateHandler> _logger;
     private readonly IBotOnMessageReceivedService _botOnMessageReceivedService;
+    private readonly IJsonStringLocalizer _localizer;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
         ILogger<UpdateHandler> logger,
-        IBotOnMessageReceivedService botOnMessageReceivedService)
+        IBotOnMessageReceivedService botOnMessageReceivedService,
+        IJsonStringLocalizer localizer)
     {
         _botClient = botClient;
         _logger = logger;
         _botOnMessageReceivedService = botOnMessageReceivedService;
+        _localizer = localizer;
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)

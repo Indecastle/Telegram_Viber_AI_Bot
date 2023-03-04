@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using MyTemplate.App.Core.Models.Types;
+using OpenAI.Images;
 using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 
@@ -82,6 +83,16 @@ public class User : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     }
 
     public void RemoveUnnecessary()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ReduceChatTokens(int tokens)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void ReduceImageTokens(ImageSize imageSize, OpenAiConfiguration openAiOptions)
     {
         throw new NotImplementedException();
     }

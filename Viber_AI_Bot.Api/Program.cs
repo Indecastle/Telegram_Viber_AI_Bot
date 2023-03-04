@@ -67,7 +67,7 @@ builder.Services
 
 builder.Services
     .AddViberDataAccess(builder.Configuration)
-    .AddEvents(builder.Configuration, builder.Environment)
+    .AddViberEvents(builder.Configuration, builder.Environment)
     .AddViberCoreModule();
 
 var app = builder.Build();

@@ -59,7 +59,51 @@ public static class InfrastructureModule
     public static IServiceCollection AddEvents(
         this IServiceCollection services,
         IConfiguration configuration,
-        IWebHostEnvironment env)
+        IHostEnvironment env)
+    {
+        services.AddSingleton<IConsumerServiceSelector, SubscriptionConsumerServiceSelector>();
+
+        services
+            .Where(x => x.ImplementationInstance is JobRegistration)
+            .Select(x => x.ImplementationInstance)
+            .Cast<JobRegistration>()
+            .ToArray()
+            .ForEach(x => services.AddJobSubscription(x));
+
+        services
+            .AddSubscription<ViberPostEndpointSubscription>("telegram.postendpoint");
+
+        services
+            .AddCap(options =>
+            {
+                options.UseEntityFramework<AppDbContext>(x => x.Schema = "dbo");
+                options.UseRabbitMQ(o =>
+                {
+                    o.HostName = "localhost";
+                    // o.ConnectionFactoryOptions = opt => { 
+                    //     //rabbitmq client ConnectionFactory config
+                    // };
+                });
+                
+                if (env.IsDevelopment())
+                    options.UseDashboard();
+
+                options.FailedRetryCount = 10;
+            })
+            .Services
+            .AddScoped<CapEventStore>()
+            .AddScoped<IEventStore>(x => x.GetRequiredService<CapEventStore>())
+            .AddScoped<IEventPublisherPort>(x => x.GetRequiredService<CapEventStore>());
+        
+        services.AddMediatR(typeof(InfrastructureModule).Assembly);
+        
+        return services;
+    }
+    
+    public static IServiceCollection AddViberEvents(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment env)
     {
         services.AddSingleton<IConsumerServiceSelector, SubscriptionConsumerServiceSelector>();
 
@@ -85,8 +129,8 @@ public static class InfrastructureModule
                     // };
                 });
                 
-                if (env.IsDevelopment())
-                    options.UseDashboard();
+                // if (env.IsDevelopment())
+                //     options.UseDashboard();
 
                 options.FailedRetryCount = 10;
             })

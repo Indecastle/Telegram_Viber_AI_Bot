@@ -1,14 +1,7 @@
-using System.Net.Http.Headers;
-using System.Text;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using OpenAI;
 using OpenAI.Chat;
-using OpenAI.Completions;
 using OpenAI.Images;
-using OpenAI.Models;
-using Telegram_AI_Bot.Core.Models.Viber.Users;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 
 namespace Telegram_AI_Bot.Core.Services.OpenAi;
@@ -16,7 +9,7 @@ namespace Telegram_AI_Bot.Core.Services.OpenAi;
 public interface IOpenAiService
 {
     Task<string?> ChatHandler(string requestText, IOpenAiUser user);
-    Task<string?> ImageHandler(string requestText, IOpenAiUser user);
+    Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small);
 }
 
 public class OpenAiService : IOpenAiService
@@ -24,14 +17,14 @@ public class OpenAiService : IOpenAiService
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
     private static readonly ChatPrompt[] TemplateSystemChatPrompt = { new("system", "You are a helpful assistant.") };
 
-    private readonly OpenAiConfiguration _openAiptions;
+    private readonly OpenAiConfiguration _openAiOptions;
     private readonly OpenAIClient _api;
 
     public OpenAiService(
-        IOptions<OpenAiConfiguration> openAiptions)
+        IOptions<OpenAiConfiguration> openAiOptions)
     {
-        _openAiptions = openAiptions.Value;
-        _api = new OpenAIClient(new OpenAIAuthentication(_openAiptions.Token, null));
+        _openAiOptions = openAiOptions.Value;
+        _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, null));
     }
 
     public async Task<string?> ChatHandler(string requestText, IOpenAiUser user)
@@ -51,17 +44,19 @@ public class OpenAiService : IOpenAiService
         var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest);
 
         var text = result.Choices[0].Message.ToString().Trim();
-        
+
         user.AddMessage(requestText, true, now);
         user.AddMessage(text, false, now);
         user.RemoveUnnecessary();
+        user.ReduceChatTokens(result.Usage.TotalTokens);
         
         return text;
     }
 
-    public async Task<string?> ImageHandler(string requestText, IOpenAiUser user)
+    public async Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small)
     {
         var images = await GetImages(requestText.Trim());
+        user.ReduceImageTokens(size, _openAiOptions);
         return images.FirstOrDefault();
     }
     

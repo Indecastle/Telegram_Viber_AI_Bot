@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Models.Viber.Users;
@@ -11,8 +12,6 @@ namespace Telegram_AI_Bot.Infrastructure.DataAccess.Repositories.Viber;
 
 internal class ViberUserRepositoryAdapter : IViberUserRepository
 {
-    public const int FREE_START_BALANCE = 10;
-    
     private readonly AppDbContext _dbContext;
 
     public ViberUserRepositoryAdapter(AppDbContext dbContext)
@@ -38,7 +37,7 @@ internal class ViberUserRepositoryAdapter : IViberUserRepository
             ViberMessageHelper.SetDefaultCulture(internalUser.Country);
             var lang = Thread.CurrentThread.CurrentUICulture.Name;
             var entryEntity = await _dbContext.ViberUser.AddAsync(
-                await ViberUser.NewClientAsync(internalUser.Id, internalUser.Name, lang, FREE_START_BALANCE));
+                await ViberUser.NewClientAsync(internalUser.Id, internalUser.Name, lang, Constants.FREE_START_BALANCE));
 
             await _dbContext.SaveChangesAsync();
             return entryEntity.Entity;
