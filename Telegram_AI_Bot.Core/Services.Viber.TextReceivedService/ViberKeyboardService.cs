@@ -48,18 +48,18 @@ public class ViberKeyboardService : IViberKeyboardService
         string command = args[0];
         args = args.Skip(1).ToArray();
 
-        if (!KeyboardCommands.All.Contains(command.ToLowerInvariant()))
+        if (!ViberKeyboardCommands.All.Contains(command.ToLowerInvariant()))
             return;
 
         var user = await _userRepository.ByUserIdAsync(sender.Id);
         
         var action = command switch
         {
-            KeyboardCommands.MainMenu => KeyboardMainMenu(sender, args),
-            KeyboardCommands.Balance => KeyboardBalance(sender, args),
-            KeyboardCommands.Settings => KeyboardSettings(sender, user, args),
-            KeyboardCommands.Settings_SetLanguage => KeyboardSettingsLanguage(sender, user, args),
-            KeyboardCommands.Help => KeyboardHelp(sender, user, args),
+            ViberKeyboardCommands.MainMenu => KeyboardMainMenu(sender, args),
+            ViberKeyboardCommands.Balance => KeyboardBalance(sender, args),
+            ViberKeyboardCommands.Settings => KeyboardSettings(sender, user, args),
+            ViberKeyboardCommands.Settings_SetLanguage => KeyboardSettingsLanguage(sender, user, args),
+            ViberKeyboardCommands.Help => KeyboardHelp(sender, user, args),
         };
 
         await action;
@@ -105,21 +105,21 @@ public class ViberKeyboardService : IViberKeyboardService
             ViberMessageHelper.GetDefaultKeyboard(new[]
             {
                 ViberMessageHelper.GetDefaultKeyboardButton(2, 3, _localizer.GetString("ChangeLanguage"),
-                    KeyboardCommands.Settings_SetLanguage,
+                    ViberKeyboardCommands.Settings_SetLanguage,
                     textVerticalAlign: "bottom",
                     textBackgroundGradientColor: "#003cb3",
                     image: "https://i.imgur.com/ATcqFri.png"),
 
                 ViberMessageHelper.GetDefaultKeyboardButton(2, 3, 
                     _localizer.GetString("SelectedMode_" + user.SelectedMode.Value),
-                    KeyboardCommands.WithArgs(KeyboardCommands.Settings, "SwitchMode"),
+                    ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Settings, "SwitchMode"),
                     textVerticalAlign: "bottom",
                     textSize: "regular",
                     textBackgroundGradientColor: gradientColor,
                     image: "https://i.imgur.com/RFxB3Wa.png"),
                 
                 ViberMessageHelper.GetDefaultKeyboardButton(2, 3, _localizer.GetString("DeleteContext"),
-                    KeyboardCommands.WithArgs(KeyboardCommands.Settings, "DeleteContext"),
+                    ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Settings, "DeleteContext"),
                     textVerticalAlign: "bottom",
                     textBackgroundGradientColor: "#003cb3",
                     image: "https://i.imgur.com/4Qe65rF.png"),
@@ -142,10 +142,10 @@ public class ViberKeyboardService : IViberKeyboardService
             ViberMessageHelper.GetDefaultKeyboard(new[]
             {
                 ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("Russian"),
-                    KeyboardCommands.WithArgs(KeyboardCommands.Settings_SetLanguage, "ru-RU")),
+                    ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Settings_SetLanguage, "ru-RU")),
                 ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("English"),
-                    KeyboardCommands.WithArgs(KeyboardCommands.Settings_SetLanguage, "en-US")),
-                ViberMessageHelper.BackToPrevMenuButton(_localizer, KeyboardCommands.Settings),
+                    ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Settings_SetLanguage, "en-US")),
+                ViberMessageHelper.BackToPrevMenuButton(_localizer, ViberKeyboardCommands.Settings),
             }));
 
         await _botClient.SendMessageV6Async(newMessage);
@@ -156,9 +156,9 @@ public class ViberKeyboardService : IViberKeyboardService
         var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, _localizer.GetString("HelpText"), ViberMessageHelper.GetDefaultKeyboard(new[]
         {
             ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("GetContact"),
-                KeyboardCommands.WithArgs(KeyboardCommands.Help, "GetAdminContact")),
+                ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Help, "GetAdminContact")),
             ViberMessageHelper.GetDefaultKeyboardButton(3, 1, _localizer.GetString("MyId"),
-                KeyboardCommands.WithArgs(KeyboardCommands.Help, "MyId")),
+                ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Help, "MyId")),
             ViberMessageHelper.BackToMainMenuButton(_localizer),
         }));
         

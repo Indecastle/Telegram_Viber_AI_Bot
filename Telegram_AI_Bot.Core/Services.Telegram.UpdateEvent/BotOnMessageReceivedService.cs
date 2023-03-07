@@ -1,12 +1,16 @@
+using Askmethat.Aspnet.JsonLocalizer.Localizer;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
-using MyTemplate.App.Core.Ports.DataAccess;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
+using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
+using Telegram_AI_Bot.Core.Telegram;
 
-namespace Telegram_AI_Bot.Core.Services.BotReceivedMessage;
+namespace Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 
 public interface IBotOnMessageReceivedService
 {
@@ -19,40 +23,106 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
     private readonly ILogger<BotOnMessageReceivedService> _logger;
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ITelegramOpenAiService _telegramOpenAiService;
+    private readonly IJsonStringLocalizer _localizer;
 
     public BotOnMessageReceivedService(
         ITelegramBotClient botClient,
         ILogger<BotOnMessageReceivedService> logger,
         IUserRepository userRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ITelegramOpenAiService telegramOpenAiService, IJsonStringLocalizer localizer)
     {
         _botClient = botClient;
         _logger = logger;
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
+        _telegramOpenAiService = telegramOpenAiService;
+        _localizer = localizer;
     }
 
     public async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
     {
+        var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From);
+        TelegramMessageHelper.SetCulture(user.Language);
+        
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
         if (message.Text is not { } messageText)
             return;
-        Func<ITelegramBotClient, Message, CancellationToken, Task<Message>> a = SendInlineKeyboard;
-        var action = messageText.Split(' ')[0] switch
+
+        var action = messageText switch
         {
-            "/inline_keyboard" => SendInlineKeyboard(_botClient, message, cancellationToken),
-            "/keyboard" => SendReplyKeyboard(_botClient, message, cancellationToken),
-            "/remove" => RemoveKeyboard(_botClient, message, cancellationToken),
-            "/photo" => SendFile(_botClient, message, cancellationToken),
-            "/request" => RequestContactAndLocation(_botClient, message, cancellationToken),
-            "/inline_mode" => StartInlineQuery(_botClient, message, cancellationToken),
-            "/throw" => FailingHandler(_botClient, message, cancellationToken),
-            "/help" => Usage(_botClient, message, cancellationToken),
-            _ => Usage(_botClient, message, cancellationToken)
+            var x when x.StartsWith("/") => CommandHandler(message, user, cancellationToken),
+            _ => _telegramOpenAiService.Handler(message, cancellationToken)
         };
         
-        Message sentMessage = await action;
-        _logger.LogInformation("The message was sent with id: {SentMessageId}", sentMessage.MessageId);
+        await action;
+
+        await _unitOfWork.CommitAsync();
+    }
+
+    private async Task CommandHandler(Message message, TelegramUser user, CancellationToken cancellationToken)
+    {
+        var args = message.Text.Split(' ');
+        string command = args[0];
+        args = args.Skip(1).ToArray();
+
+        if (!TelegramCommands.All.Contains(command.ToLowerInvariant()))
+            return;
+        
+        await _botClient.SendChatActionAsync(
+            chatId: message.Chat.Id,
+            chatAction: ChatAction.Typing,
+            cancellationToken: cancellationToken);
+        
+        var action = command switch
+        {
+            TelegramCommands.Start => MainMenuCommand(message, args, user, cancellationToken),
+            TelegramCommands.MainMenu => MainMenuCommand(message, args, user, cancellationToken),
+            TelegramCommands.Settings => SettingsCommand(message, args, user, cancellationToken),
+            TelegramCommands.Balance => BalanceCommand(message, args, user, cancellationToken),
+            TelegramCommands.Help => HelpCommand(message, args, cancellationToken),
+        };
+
+        await action;
+    }
+
+    private async Task MainMenuCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    {
+        await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: _localizer.GetString("MainMenu"),
+            replyMarkup: TelegramInlineMenus.MainMenu(_localizer),
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
+    }
+
+    private async Task SettingsCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    {
+        await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: TelegramInlineMenus.GetSettingsText(_localizer, user),
+            replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer),
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
+    }
+    
+    private async Task BalanceCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    {
+        await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: _localizer.GetString("Balance", user.Balance),
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
+    }
+    
+    private async Task HelpCommand(Message message, string[] args, CancellationToken cancellationToken)
+    {
+        await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: _localizer.GetString("HelpText"),
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
     }
 
     // Send inline keyboard
@@ -178,7 +248,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
     }
 
     
-    private async Task<Message> Usage(ITelegramBotClient botClient, Message message,
+    private async Task<Message> Usage(Message message, string[] args,
         CancellationToken cancellationToken)
     {
         const string usage = "Usage:\n" +
@@ -189,7 +259,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
                              "/request     - request location or contact\n" +
                              "/inline_mode - send keyboard with Inline Query";
 
-        return await botClient.SendTextMessageAsync(
+        return await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: usage,
             replyMarkup: new ReplyKeyboardRemove(),

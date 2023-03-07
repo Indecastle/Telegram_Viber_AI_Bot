@@ -1,6 +1,6 @@
 namespace Telegram_AI_Bot.Core.Services.Viber.TextReceivedService;
 
-public static class KeyboardCommands
+public static class ViberKeyboardCommands
 {
     public const string MainMenu = "--mainmenu";
     public const string Balance = "--balance";

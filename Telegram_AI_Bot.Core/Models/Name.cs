@@ -4,7 +4,7 @@ namespace Telegram_AI_Bot.Core.Models;
 
 public class Name : ValueObject
 {
-    public Name(string firstName, string lastName)
+    public Name(string firstName, string? lastName)
     {
         Asserts.Arg(firstName).NotNullOrWhiteSpace().MdLength();
 

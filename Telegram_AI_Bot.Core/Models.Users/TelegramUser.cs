@@ -5,30 +5,29 @@ using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 
-namespace Telegram_AI_Bot.Core.Models.Viber.Users;
+namespace Telegram_AI_Bot.Core.Models.Users;
 
-public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
+public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
 {
     protected readonly List<OpenAiMessage> _messages = new();
-    
-    protected ViberUser()
+
+    protected TelegramUser()
     {
     }
 
     public Guid Id { get; protected set; }
-    public string UserId { get; protected set; }
-    public string Name { get; protected set; }
-    public string Language { get; protected set; }
+    public long UserId { get; protected set; }
+    public Name Name { get; protected set; }
+    public string Language { get; set; }
     public long Balance { get; set; }
     public SelectedMode SelectedMode { get; set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
-    
     public IReadOnlyCollection<OpenAiMessage> Messages => _messages.AsReadOnly();
-    
+
     public ICollection<INotification> Events { get; } = new List<INotification>();
 
-    public void SetName(string name)
+    public void SetName(Name name)
     {
         Name = name;
     }
@@ -58,18 +57,18 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         SelectedMode = SelectedMode.NextMode;
     }
     
-    public static async Task<ViberUser> NewClientAsync(
-        string userId,
-        string name,
+    public static async Task<TelegramUser> NewClientAsync(
+        long userId,
+        Name name,
         string language,
         int balance)
     {
         return await NewAsync(userId, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER);
     }
 
-    private static async Task<ViberUser> NewAsync(
-        string userId,
-        string name,
+    private static async Task<TelegramUser> NewAsync(
+        long userId,
+        Name name,
         string language,
         int balance,
         SelectedMode selectedMode,
@@ -78,7 +77,7 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         Asserts.Arg(role).NotNull();
         Asserts.Arg(name).NotNull();
 
-        var user = new ViberUser
+        var user = new TelegramUser
         {
             Id = Guid.NewGuid(),
             
@@ -106,7 +105,7 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     {
         _messages.Add(new OpenAiMessage(new Guid(), text, isMe, time));
     }
-    
+
     public void RemoveUnnecessary()
     {
         if (_messages.Count <= Constants.MAX_STORED_MESSAGES)

@@ -1,7 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Telegram.Bot.Types;
+using Telegram_AI_Bot.Core.Common;
+using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
+using Telegram_AI_Bot.Core.Telegram;
 using Webinex.Coded;
+// using User = Telegram_AI_Bot.Core.Models.Users.User;
 
 namespace Telegram_AI_Bot.Infrastructure.DataAccess.Repositories;
 
@@ -14,32 +19,54 @@ internal class UserRepositoryAdapter : IUserRepository
         _dbContext = dbContext;
     }
 
-    public async Task<bool> ExistsAsync(string userId)
+    public async Task<bool> ExistsAsync(long userId)
     {
         return await _dbContext.Users.AnyAsync(x => x.UserId == userId);
     }
-
-    public async Task AddAsync(User user)
+    
+    public async Task<TelegramUser> GetOrCreateIfNotExistsAsync(User internalUser)
     {
-        await _dbContext.AddAsync(user);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.UserId == internalUser!.Id);
+        if (user == null)
+        {
+            var lang = TelegramMessageHelper.SetDefaultCulture(internalUser.LanguageCode);
+            var entryEntity = await _dbContext.Users.AddAsync(
+                await TelegramUser.NewClientAsync(internalUser.Id, new Name(internalUser.FirstName, internalUser.LastName), lang, Constants.FREE_START_BALANCE));
+
+            await _dbContext.SaveChangesAsync();
+            return entryEntity.Entity;
+        }
+
+        return user;
     }
 
-    public async Task<User> ByIdAsync(Guid id)
+    public async Task AddAsync(TelegramUser telegramUser)
+    {
+        await _dbContext.AddAsync(telegramUser);
+    }
+
+    public async Task<TelegramUser> ByUserIdAsync(long userId)
+    {
+        return await _dbContext.Users.Include(x => x.Messages).FirstOrDefaultAsync(x => x.UserId == userId)
+               ?? throw CodedException.NotFound(userId);
+    }
+
+    public async Task<TelegramUser> ByIdAsync(Guid id)
     {
         return await _dbContext.Users.FindAsync(id)
             ?? throw CodedException.NotFound(id);
     }
 
-    public async Task<User[]> ByIdAsync(IEnumerable<Guid> ids)
+    public async Task<TelegramUser[]> ByIdAsync(IEnumerable<Guid> ids)
     {
         ids = ids.Distinct().ToArray();
         if (!ids.Any())
-            return Array.Empty<User>();
+            return Array.Empty<TelegramUser>();
         
         return await _dbContext.Users.Where(x => ids.Contains(x.Id)).ToArrayAsync();
     }
 
-    public async Task<User[]> AllAsync(string[]? roles)
+    public async Task<TelegramUser[]> AllAsync(string[]? roles)
     {
         var queryable = _dbContext.Users.AsQueryable();
 

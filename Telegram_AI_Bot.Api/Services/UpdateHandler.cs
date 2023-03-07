@@ -5,27 +5,30 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.InlineQueryResults;
-using Telegram_AI_Bot.Core.Services.BotReceivedMessage;
+using Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 
-namespace Telegram_AI_Bot.Api.Api.Services;
+namespace Telegram_AI_Bot.Api.Services;
 
 public class UpdateHandler : IUpdateHandler
 {
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger<UpdateHandler> _logger;
     private readonly IBotOnMessageReceivedService _botOnMessageReceivedService;
+    private readonly IBotOnCallbackQueryService _botOnCallbackQueryService;
     private readonly IJsonStringLocalizer _localizer;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
         ILogger<UpdateHandler> logger,
         IBotOnMessageReceivedService botOnMessageReceivedService,
-        IJsonStringLocalizer localizer)
+        IJsonStringLocalizer localizer,
+        IBotOnCallbackQueryService botOnCallbackQueryService)
     {
         _botClient = botClient;
         _logger = logger;
         _botOnMessageReceivedService = botOnMessageReceivedService;
         _localizer = localizer;
+        _botOnCallbackQueryService = botOnCallbackQueryService;
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
@@ -41,7 +44,7 @@ public class UpdateHandler : IUpdateHandler
             { ChatJoinRequest: { } chatJoinRequest }                       => throw new NotImplementedException(),
             { Message: { } message }                       => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),
             { EditedMessage: { } message }                 => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),
-            { CallbackQuery: { } callbackQuery }           => BotOnCallbackQueryReceived(callbackQuery, cancellationToken),
+            { CallbackQuery: { } callbackQuery }           => _botOnCallbackQueryService.Handler(callbackQuery, cancellationToken),
             { InlineQuery: { } inlineQuery }               => BotOnInlineQueryReceived(inlineQuery, cancellationToken),
             { ChosenInlineResult: { } chosenInlineResult } => BotOnChosenInlineResultReceived(chosenInlineResult, cancellationToken),
             _                                              => UnknownUpdateHandlerAsync(update, cancellationToken)

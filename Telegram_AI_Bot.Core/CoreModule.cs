@@ -3,8 +3,9 @@ using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Telegram_AI_Bot.Core.Events.Domain.Common;
 using Telegram_AI_Bot.Core.Ports.Events;
-using Telegram_AI_Bot.Core.Services.BotReceivedMessage;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
+using Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 using Telegram_AI_Bot.Core.Services.Viber.OpenAi;
 using Telegram_AI_Bot.Core.Services.Viber.TextReceivedService;
 
@@ -17,9 +18,12 @@ public static class CoreModule
         services = services ?? throw new ArgumentNullException(nameof(services));
         
         services
-            .AddScoped<IBotOnMessageReceivedService, BotOnMessageReceivedService>();
+            .AddScoped<IBotOnMessageReceivedService, BotOnMessageReceivedService>()
+            .AddScoped<ITelegramOpenAiService, TelegramOpenAiService>()
+            .AddScoped<IBotOnCallbackQueryService, BotOnCallbackQueryService>();
 
-     
+        services
+            .AddSingleton<IOpenAiService, OpenAiService>();
             
         return services;
     }

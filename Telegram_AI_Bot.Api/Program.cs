@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Telegram.Bot;
 using Telegram_AI_Bot;
-using Telegram_AI_Bot.Api.Api.Services;
 using Telegram_AI_Bot.Api.Services;
 using Telegram_AI_Bot.Core;
 using Telegram_AI_Bot.Core.Services.OpenAi;

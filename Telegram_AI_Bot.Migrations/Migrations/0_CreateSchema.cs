@@ -16,7 +16,7 @@ public class AddUsersTable : Migration
                 .NotNullable()
                 .PrimaryKey())
             .WithColumn("UserId", x => x
-                .AsString(20)
+                .AsInt64()
                 .Unique()
                 .NotNullable())
             .WithColumn("FirstName", x => x
@@ -24,7 +24,7 @@ public class AddUsersTable : Migration
                 .NotNullable())
             .WithColumn("LastName", x => x
                 .AsString(250)
-                .NotNullable())
+                .Nullable())
             .WithColumn("Role", x => x
                 .AsString(250)
                 .NotNullable())
@@ -32,7 +32,7 @@ public class AddUsersTable : Migration
                 .AsString(250)
                 .Nullable())
             .WithColumn("Balance", x => x
-                .AsInt32()
+                .AsInt64()
                 .NotNullable())
             .WithColumn("Language", x => x
                 .AsString(10)

@@ -19,7 +19,7 @@ public static class ViberMessageHelper
             backgroundColor: DEFAULT_BACKGROUND_BUTTON_COLOR2);
 
     public static ViberKeyboardButton BackToMainMenuButton(IJsonStringLocalizer localizer) =>
-        GetDefaultKeyboardButton(6, 1, localizer.GetString("BackToMainMenu"), KeyboardCommands.MainMenu,
+        GetDefaultKeyboardButton(6, 1, localizer.GetString("BackToMainMenu"), ViberKeyboardCommands.MainMenu,
             backgroundColor: DEFAULT_BACKGROUND_BUTTON_COLOR2);
 
 
@@ -40,15 +40,15 @@ public static class ViberMessageHelper
         string text) =>
         GetDefaultKeyboardMessage(sender, text, GetDefaultKeyboard(new[]
         {
-            GetDefaultKeyboardButton(2, 3, localizer.GetString("BalanceTitle"), KeyboardCommands.Balance,
+            GetDefaultKeyboardButton(2, 3, localizer.GetString("BalanceTitle"), ViberKeyboardCommands.Balance,
                 textVerticalAlign: "bottom",
                 textBackgroundGradientColor: "#004de6",
                 image: "https://i.imgur.com/nhZamZl.png"),
-            GetDefaultKeyboardButton(2, 3, localizer.GetString("Settings"), KeyboardCommands.Settings,
+            GetDefaultKeyboardButton(2, 3, localizer.GetString("Settings"), ViberKeyboardCommands.Settings,
                 textVerticalAlign: "bottom",
                 textBackgroundGradientColor: "#004de6",
                 image: "https://i.imgur.com/lrsFUrb.png"),
-            GetDefaultKeyboardButton(2, 3, localizer.GetString("Help"), KeyboardCommands.Help,
+            GetDefaultKeyboardButton(2, 3, localizer.GetString("Help"), ViberKeyboardCommands.Help,
                 textVerticalAlign: "bottom",
                 textBackgroundGradientColor: "#004de6",
                 image: "https://i.imgur.com/XJMJ4a1.png"),

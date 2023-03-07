@@ -1,12 +1,15 @@
-﻿using Telegram_AI_Bot.Core.Models.Users;
+﻿using Telegram.Bot.Types;
+using Telegram_AI_Bot.Core.Models.Users;
 
 namespace Telegram_AI_Bot.Core.Ports.DataAccess;
 
 public interface IUserRepository
 {
-    Task<bool> ExistsAsync(string email);
-    Task AddAsync(User user);
-    Task<User> ByIdAsync(Guid id);
-    Task<User[]> ByIdAsync(IEnumerable<Guid> ids);
-    Task<User[]> AllAsync(string[]? roles);
+    Task<bool> ExistsAsync(long email);
+    Task<TelegramUser> GetOrCreateIfNotExistsAsync(User user);
+    Task AddAsync(TelegramUser telegramUser);
+    Task<TelegramUser> ByUserIdAsync(long userId);
+    Task<TelegramUser> ByIdAsync(Guid id);
+    Task<TelegramUser[]> ByIdAsync(IEnumerable<Guid> ids);
+    Task<TelegramUser[]> AllAsync(string[]? roles);
 }

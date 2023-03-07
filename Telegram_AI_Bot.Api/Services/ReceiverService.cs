@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram_AI_Bot.Api.Abstract;
-using Telegram_AI_Bot.Api.Api.Services;
 
 
 namespace Telegram_AI_Bot.Api.Services;

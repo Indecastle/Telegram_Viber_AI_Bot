@@ -5,11 +5,19 @@ namespace Telegram_AI_Bot.Core.Services.OpenAi;
 
 public interface IOpenAiUser
 {
-    public IReadOnlyCollection<OpenAiMessage> Messages { get; }
+    long Balance { get; set; }
+    SelectedMode SelectedMode { get; set; }
+    IReadOnlyCollection<OpenAiMessage> Messages { get; }
+    bool IsPositiveBalance();
+    void DeleteContext();
+    void AddMessage(string text, bool isMe, DateTimeOffset time);
+    void RemoveUnnecessary();
+    void ReduceChatTokens(int tokens);
+    void ReduceImageTokens(ImageSize imageSize, OpenAiConfiguration openAiOptions);
 
-    public void DeleteContext();
-    public void AddMessage(string text, bool isMe, DateTimeOffset time);
-    public void RemoveUnnecessary();
-    public void ReduceChatTokens(int tokens);
-    public void ReduceImageTokens(ImageSize imageSize, OpenAiConfiguration openAiOptions);
+
+
+    void SetLanguage(string lang);
+
+    void SwitchMode();
 }
