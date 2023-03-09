@@ -124,10 +124,12 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             case "SwitchMode": 
                 user.SwitchMode();
                 break;
-            case "DeleteContext": 
-                user.DeleteContext();
-                await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer.GetString("DeletedContext"));
-                return;
+            case "DeleteContext":
+                if (user.DeleteContext())
+                    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer.GetString("DeletedContext"));
+                else
+                    return;
+                break;
         }
 
         await _botClient.EditMessageTextAsync(

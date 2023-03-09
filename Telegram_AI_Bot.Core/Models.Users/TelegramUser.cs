@@ -96,9 +96,15 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         return Balance > 0;
     }
 
-    public void DeleteContext()
+    public bool DeleteContext()
     {
-        _messages.Clear();
+        if (_messages.Count > 0)
+        {
+            _messages.Clear();
+            return true;
+        }
+
+        return false;
     }
 
     public void AddMessage(string text, bool isMe, DateTimeOffset time)

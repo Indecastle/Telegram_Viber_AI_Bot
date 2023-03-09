@@ -11,7 +11,8 @@
     "Language": "Language: ",
     "ChatModel": "Chat model: ",
     "ImageModel": "Image model: ",
-    "MaxContextTokens": "Max tokens: "
+    "MaxContextTokens": "Max tokens: ",
+    "Context": "Context: {0}/{1} messages"
   },
   "Help": "Help",
   "ChangeLanguage": "Change language",

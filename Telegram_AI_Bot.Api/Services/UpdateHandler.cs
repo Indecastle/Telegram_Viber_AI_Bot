@@ -85,7 +85,19 @@ public class UpdateHandler : IUpdateHandler
             new InlineQueryResultArticle(
                 id: "1",
                 title: "TgBots",
-                inputMessageContent: new InputTextMessageContent("hello"))
+                inputMessageContent: new InputTextMessageContent("hello")),
+            new InlineQueryResultArticle(
+                id: "2",
+                title: "TgBots",
+                inputMessageContent: new InputTextMessageContent("https://en.wikipedia.org/wiki/German_Shepherd")),
+            new InlineQueryResultArticle(
+                id: "3",
+                title: "Azaz",
+                inputMessageContent: new InputContactMessageContent("+37533123456", "MyDad")),
+            new InlineQueryResultContact(
+                id: "4",
+                firstName: "Wooow",
+                phoneNumber: "3742232323")
         };
 
         await _botClient.AnswerInlineQueryAsync(

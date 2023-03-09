@@ -2,6 +2,7 @@ using System.Text;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
@@ -60,6 +61,9 @@ public static class TelegramInlineMenus
                         TelegramCommands.Keyboard.Settings_SetLanguage),
                     InlineKeyboardButton.WithCallbackData(localizer.GetString("SwitchMode"),
                         TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "SwitchMode")),
+                },
+                new[]
+                {
                     InlineKeyboardButton.WithCallbackData(localizer.GetString("DeleteContext"),
                         TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "DeleteContext")),
                 },
@@ -69,7 +73,7 @@ public static class TelegramInlineMenus
     public static string GetSettingsText(IJsonStringLocalizer l, TelegramUser user)
     {
         var str = new StringBuilder();
-        
+
         str.AppendLine(l.GetString("SettingsText.Title"));
         str.AppendLine(l.GetString("SettingsText.Language") + user.Language);
         str.AppendLine(l.GetString("SettingsText.Mode") + l.GetString("SelectedMode_" + user.SelectedMode.Value));
@@ -79,6 +83,8 @@ public static class TelegramInlineMenus
         {
             str.AppendLine(l.GetString("SettingsText.ChatModel") + "chat-3.5-turbo");
             str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
+            str.AppendLine(l.GetString("SettingsText.Context",
+                user.Messages.Count / 2, Constants.MAX_STORED_MESSAGES / 2));
         }
         else
         {
