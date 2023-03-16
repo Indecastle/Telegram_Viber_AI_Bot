@@ -139,4 +139,9 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         };
         Balance = Balance < 0 ? 0 : Balance;
     }
+
+    public void SetBalance(int amount)
+    {
+        Balance = amount;
+    }
 }

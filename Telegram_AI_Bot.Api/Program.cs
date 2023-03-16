@@ -13,6 +13,7 @@ using Telegram.Bot;
 using Telegram_AI_Bot;
 using Telegram_AI_Bot.Api.Services;
 using Telegram_AI_Bot.Core;
+using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Telegram.Options;
 using Telegram_AI_Bot.Infrastructure;
@@ -20,6 +21,8 @@ using Viber.Bot.NetCore.Middleware;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddControllers();
+
 builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true);
 // Add services to the container.
 
@@ -28,6 +31,13 @@ builder.Services.Configure<TelegramBotConfiguration>(
     builder.Configuration.GetSection(TelegramBotConfiguration.Configuration));
 builder.Services.Configure<OpenAiConfiguration>(
     builder.Configuration.GetSection(OpenAiConfiguration.Configuration));
+builder.Services.Configure<CommonConfiguration>(
+    builder.Configuration.GetSection(CommonConfiguration.Configuration));
+
+builder.Services.Configure<HostOptions>(hostOptions =>
+{
+    hostOptions.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
+});
 
 builder.Services.AddViberBotApi(builder.Configuration);
 
@@ -73,11 +83,14 @@ builder.Services
 
 builder.Services
     .AddDataAccess(builder.Configuration)
-    .AddViberEvents(builder.Configuration, builder.Environment)
+    .AddEvents(builder.Configuration, builder.Environment)
+    .AddInfrastructureModule(builder.Configuration)
     .AddTelegramCoreModule();
 
 var app = builder.Build();
 
 app.UseCorrelationId();
+
+app.MapControllers();
 
 app.Run();

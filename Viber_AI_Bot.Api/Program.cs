@@ -7,6 +7,7 @@ using CorrelationId.DependencyInjection;
 using Microsoft.AspNetCore.Http.Json;
 using Viber.Bot.NetCore.Middleware;
 using Telegram_AI_Bot.Core;
+using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Viber.Options;
 using Telegram_AI_Bot.Infrastructure;
@@ -24,6 +25,8 @@ builder.Services.Configure<ViberBotConfiguration>(
     builder.Configuration.GetSection(ViberBotConfiguration.Configuration));
 builder.Services.Configure<OpenAiConfiguration>(
     builder.Configuration.GetSection(OpenAiConfiguration.Configuration));
+builder.Services.Configure<CommonConfiguration>(
+    builder.Configuration.GetSection(CommonConfiguration.Configuration));
 
 builder.Services.AddViberBotApi(builder.Configuration);
 
@@ -68,6 +71,7 @@ builder.Services
 builder.Services
     .AddViberDataAccess(builder.Configuration)
     .AddViberEvents(builder.Configuration, builder.Environment)
+    .AddInfrastructureModule(builder.Configuration)
     .AddViberCoreModule();
 
 var app = builder.Build();

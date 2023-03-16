@@ -16,12 +16,28 @@ using Telegram_AI_Bot.Infrastructure.Services.Events.Cap.Subscriptions.Registrat
 using System.Linq;
 using MediatR;
 using MoreLinq.Extensions;
+using Telegram_AI_Bot.Core;
+using Telegram_AI_Bot.Infrastructure.BackGroundHosted;
 using Telegram_AI_Bot.Infrastructure.Services.Events;
 
 namespace Telegram_AI_Bot.Infrastructure;
 
 public static class InfrastructureModule
 {
+    
+    public static IServiceCollection AddInfrastructureModule(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services = services ?? throw new ArgumentNullException(nameof(services));
+        configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        
+        services.AddSingleton<IDateTimeProvider, DateTimeProviderAdapter>();
+        services.AddHostedService<UpdateBalanceAtNight>();
+
+        return services;
+    }
+    
     public static IServiceCollection AddDataAccess(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -52,7 +68,7 @@ public static class InfrastructureModule
 
         services
             .AddScoped<IViberUserRepository, ViberUserRepositoryAdapter>();
-        
+
         return services;
     }
 

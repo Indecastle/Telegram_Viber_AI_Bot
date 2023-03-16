@@ -47,7 +47,12 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
 
         Role = role;
     }
-    
+
+    public void SetBalance(int amount)
+    {
+        Balance = amount;
+    }
+
     public void SetLanguage(string lang)
     {
         Language = lang;

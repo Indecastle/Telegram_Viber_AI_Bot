@@ -1,5 +1,6 @@
 ﻿using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Models.Viber.Users;
+using Telegram_AI_Bot.Core.Services.OpenAi;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 
 namespace Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
@@ -13,4 +14,5 @@ public interface IViberUserRepository
     Task<ViberUser> ByIdAsync(Guid id);
     Task<ViberUser[]> ByIdAsync(IEnumerable<Guid> ids);
     Task<ViberUser[]> AllAsync(string[]? roles);
+    Task<IOpenAiUser[]> GetAllWithLowBalance();
 }

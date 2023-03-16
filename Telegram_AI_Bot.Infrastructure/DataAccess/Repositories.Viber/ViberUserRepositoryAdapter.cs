@@ -4,6 +4,7 @@ using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Models.Viber.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
+using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Viber;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 using Webinex.Coded;
@@ -75,5 +76,12 @@ internal class ViberUserRepositoryAdapter : IViberUserRepository
             queryable = queryable.Where(x => roles.Contains(x.Role.Value));
         
         return await queryable.ToArrayAsync();
+    }
+
+    public async Task<IOpenAiUser[]> GetAllWithLowBalance()
+    {
+        return await _dbContext.ViberUser.AsQueryable()
+            .Where(x => x.Balance < Constants.LOW_LIMIT_BALANCE)
+            .ToArrayAsync();
     }
 }

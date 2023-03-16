@@ -14,10 +14,7 @@ public interface IOpenAiUser
     void RemoveUnnecessary();
     void ReduceChatTokens(int tokens);
     void ReduceImageTokens(ImageSize imageSize, OpenAiConfiguration openAiOptions);
-
-
-
+    public void SetBalance(int amount);
     void SetLanguage(string lang);
-
     void SwitchMode();
 }
