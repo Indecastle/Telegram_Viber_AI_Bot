@@ -1,7 +1,7 @@
 ﻿using FluentMigrator;
 using Webinex.Migrations.Extensions;
 
-namespace Telegram_AI_Bot.Migrations;
+namespace Viber_AI_Bot.Migrations.Migrations;
 
 [Migration(202303241815)]
 public class AddColumnsToUsersTable : Migration

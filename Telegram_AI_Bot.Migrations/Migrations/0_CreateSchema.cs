@@ -2,7 +2,7 @@
 using FluentMigrator;
 using Webinex.Migrations.Extensions;
 
-namespace Telegram_AI_Bot.Migrations;
+namespace Telegram_AI_Bot.Migrations.Migrations;
 
 [Migration(0)]
 public class AddUsersTable : Migration 
