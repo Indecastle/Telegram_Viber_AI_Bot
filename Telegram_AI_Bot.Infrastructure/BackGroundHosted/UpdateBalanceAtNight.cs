@@ -20,17 +20,23 @@ internal class UpdateBalanceAtNight : BackgroundService
     private readonly ILogger<UpdateBalanceAtNight> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly CommonConfiguration _options;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
-    public UpdateBalanceAtNight(IServiceScopeFactory serviceScopeFactory, IOptions<CommonConfiguration> options, ILogger<UpdateBalanceAtNight> logger)
+    public UpdateBalanceAtNight(
+        IServiceScopeFactory serviceScopeFactory,
+        IOptions<CommonConfiguration> options,
+        ILogger<UpdateBalanceAtNight> logger,
+        IDateTimeProvider dateTimeProvider)
     {
         _serviceScopeFactory = serviceScopeFactory;
         _options = options.Value;
         _logger = logger;
+        _dateTimeProvider = dateTimeProvider;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using CronosPeriodicTimer timer = new CronosPeriodicTimer(CronExpression, CronFormat.IncludeSeconds);
+        using CronosPeriodicTimer timer = new CronosPeriodicTimer(CronExpression, CronFormat.IncludeSeconds, _dateTimeProvider);
         while (
             !stoppingToken.IsCancellationRequested &&
             await timer.WaitForNextTickAsync(stoppingToken))

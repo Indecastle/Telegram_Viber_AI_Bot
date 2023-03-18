@@ -6,11 +6,11 @@
   "NoBalance": "Не хватает средств.\nДля пополнения баланса свяжитесь с владельцем.",
   "Settings": "Настройки",
   "SettingsText": {
-    "Title": "<b>Настройки</b>",
+    "Title": "<i><b>Настройки</b></i>",
     "Mode": "Режим: ",
     "Language": "Язык: ",
-    "ChatModel": "Модель чат-бота: ",
-    "ImageModel": "Модель изображений: ",
+    "ChatModel": "Модель: ",
+    "ImageModel": "Модель: ",
     "MaxContextTokens": "Максимальное кол-во токенов: ",
     "Context": "Контекст: {0}/{1} сообщений"
   },
@@ -27,7 +27,9 @@
   "SwitchMode": "Сменить режим",
   "SelectedMode_Chat": "чат-бот",
   "SelectedMode_Image": "\uD83D\uDD25изображения\uD83D\uDD25",
-  "DeleteContext": "Удалить контекст",
+  "DisableContext": "Выключить контекст",
+  "EnableContext": "Включить контекст",
+  "ClearContext": "Очистить контекст",
   "DeletedContext": "Контекст был удалён",
   "GetContact": "Контакт владельца",
   "MyId": "Мой ID"

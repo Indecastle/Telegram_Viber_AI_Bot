@@ -14,7 +14,7 @@
   "Back": "Go back",
   "SelectedMode_Chat": "Chat mode",
   "SelectedMode_Image": "Image generation mode",
-  "DeleteContext": "Delete context",
+  "ClearContext": "Delete context",
   "DeletedContext": "Context has been deleted",
   "GetContact": "Owner's contact",
   "MyId": "My ID"

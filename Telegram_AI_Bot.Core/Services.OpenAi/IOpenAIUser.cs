@@ -9,7 +9,7 @@ public interface IOpenAiUser
     SelectedMode SelectedMode { get; set; }
     IReadOnlyCollection<OpenAiMessage> Messages { get; }
     bool IsPositiveBalance();
-    bool DeleteContext();
+    bool ClearContext();
     void AddMessage(string text, bool isMe, DateTimeOffset time);
     void RemoveUnnecessary();
     void ReduceChatTokens(int tokens);
@@ -17,4 +17,5 @@ public interface IOpenAiUser
     public void SetBalance(int amount);
     void SetLanguage(string lang);
     void SwitchMode();
+    bool IsEnabledContext();
 }

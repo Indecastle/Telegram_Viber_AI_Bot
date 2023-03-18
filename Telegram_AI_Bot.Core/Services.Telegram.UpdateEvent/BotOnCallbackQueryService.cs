@@ -104,6 +104,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             messageId: callbackQuery.Message.MessageId,
             text: _localizer.GetString("MainMenu"),
             replyMarkup: TelegramInlineMenus.MainMenu(_localizer),
+            parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
 
@@ -124,9 +125,13 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             case "SwitchMode": 
                 user.SwitchMode();
                 break;
-            case "DeleteContext":
-                if (user.DeleteContext())
-                    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer.GetString("DeletedContext"));
+            case "SwitchContext": 
+                user.SwitchEnablingContext();
+                break;
+            case "ClearContext":
+                if (user.ClearContext())
+                    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer.GetString("DeletedContext"),
+                        cancellationToken: cancellationToken);
                 else
                     return;
                 break;
@@ -136,7 +141,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             chatId: callbackQuery.Message.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
             text: TelegramInlineMenus.GetSettingsText(_localizer, user),
-            replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer),
+            replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }

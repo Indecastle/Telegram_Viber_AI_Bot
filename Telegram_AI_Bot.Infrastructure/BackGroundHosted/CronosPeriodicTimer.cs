@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Cronos;
+using Telegram_AI_Bot.Core;
 
 namespace Telegram_AI_Bot.Infrastructure.BackGroundHosted;
 
@@ -9,10 +10,12 @@ public sealed class CronosPeriodicTimer : IDisposable
     private PeriodicTimer _activeTimer;
     private bool _disposed;
     private static readonly TimeSpan _minDelay = TimeSpan.FromMilliseconds(500);
+    private readonly IDateTimeProvider _dateTimeProvider;
 
-    public CronosPeriodicTimer(string expression, CronFormat format)
+    public CronosPeriodicTimer(string expression, CronFormat format, IDateTimeProvider dateTimeProvider)
     {
         _cronExpression = CronExpression.Parse(expression, format);
+        _dateTimeProvider = dateTimeProvider;
     }
 
     public async ValueTask<bool> WaitForNextTickAsync(
@@ -25,7 +28,7 @@ public sealed class CronosPeriodicTimer : IDisposable
             if (_disposed) return false;
             if (_activeTimer is not null)
                 throw new InvalidOperationException("One consumer at a time.");
-            DateTime utcNow = DateTime.UtcNow;
+            DateTime utcNow = _dateTimeProvider.UtcNow.UtcDateTime;
             DateTime? utcNext = _cronExpression.GetNextOccurrence(utcNow + _minDelay);
             if (utcNext is null)
                 throw new InvalidOperationException("Unreachable date.");

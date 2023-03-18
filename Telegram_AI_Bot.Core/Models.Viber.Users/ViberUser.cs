@@ -62,6 +62,11 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     {
         SelectedMode = SelectedMode.NextMode;
     }
+
+    public bool IsEnabledContext()
+    {
+        return true;
+    }
     
     public static async Task<ViberUser> NewClientAsync(
         string userId,
@@ -102,7 +107,7 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         return Balance > 0;
     }
 
-    public bool DeleteContext()
+    public bool ClearContext()
     {
         if (_messages.Count > 0)
         {

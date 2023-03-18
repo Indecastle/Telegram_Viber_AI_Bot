@@ -93,8 +93,8 @@ public class ViberKeyboardService : IViberKeyboardService
         {
             case "SwitchMode": user.SwitchMode();
                 break;
-            case "DeleteContext": 
-                user.DeleteContext();
+            case "ClearContext": 
+                user.ClearContext();
                 text = _localizer.GetString("DeletedContext");
                 break;
         }
@@ -118,8 +118,8 @@ public class ViberKeyboardService : IViberKeyboardService
                     textBackgroundGradientColor: gradientColor,
                     image: "https://i.imgur.com/RFxB3Wa.png"),
                 
-                ViberMessageHelper.GetDefaultKeyboardButton(2, 3, _localizer.GetString("DeleteContext"),
-                    ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Settings, "DeleteContext"),
+                ViberMessageHelper.GetDefaultKeyboardButton(2, 3, _localizer.GetString("ClearContext"),
+                    ViberKeyboardCommands.WithArgs(ViberKeyboardCommands.Settings, "ClearContext"),
                     textVerticalAlign: "bottom",
                     textBackgroundGradientColor: "#003cb3",
                     image: "https://i.imgur.com/4Qe65rF.png"),

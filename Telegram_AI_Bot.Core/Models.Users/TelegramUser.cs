@@ -20,6 +20,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public Name Name { get; protected set; }
     public string Language { get; set; }
     public long Balance { get; set; }
+    public bool EnabledContext { get; protected set; }
     public SelectedMode SelectedMode { get; set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
@@ -57,13 +58,19 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         SelectedMode = SelectedMode.NextMode;
     }
     
+    public void SwitchEnablingContext()
+    {
+        EnabledContext = !EnabledContext;
+    }
+    
     public static async Task<TelegramUser> NewClientAsync(
         long userId,
         Name name,
         string language,
-        int balance)
+        int balance,
+        bool enabledContext)
     {
-        return await NewAsync(userId, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER);
+        return await NewAsync(userId, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER, enabledContext);
     }
 
     private static async Task<TelegramUser> NewAsync(
@@ -72,7 +79,8 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         string language,
         int balance,
         SelectedMode selectedMode,
-        Role role)
+        Role role,
+        bool enabledContext)
     {
         Asserts.Arg(role).NotNull();
         Asserts.Arg(name).NotNull();
@@ -87,6 +95,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
             Balance = balance,
             SelectedMode = selectedMode,
             Role = role,
+            EnabledContext = enabledContext,
         };
         return user;
     }
@@ -96,7 +105,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         return Balance > 0;
     }
 
-    public bool DeleteContext()
+    public bool ClearContext()
     {
         if (_messages.Count > 0)
         {
@@ -143,5 +152,10 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public void SetBalance(int amount)
     {
         Balance = amount;
+    }
+
+    public bool IsEnabledContext()
+    {
+        return EnabledContext;
     }
 }

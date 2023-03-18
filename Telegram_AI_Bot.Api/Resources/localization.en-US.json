@@ -6,11 +6,11 @@
   "NoBalance": "Not enough resources.\nContact the owner to top up your balance.",
   "Settings": "Settings",
   "SettingsText": {
-    "Title": "<b>Settings</b>",
+    "Title": "<i><b>Settings</b></i>",
     "Mode": "Mode: ",
     "Language": "Language: ",
-    "ChatModel": "Chat model: ",
-    "ImageModel": "Image model: ",
+    "ChatModel": "Model: ",
+    "ImageModel": "Model: ",
     "MaxContextTokens": "Max tokens: ",
     "Context": "Context: {0}/{1} messages"
   },
@@ -27,7 +27,9 @@
   "SwitchMode": "Change mode",
   "SelectedMode_Chat": "сhat",
   "SelectedMode_Image": "\uD83D\uDD25image\uD83D\uDD25",
-  "DeleteContext": "Delete context",
+  "DisableContext": "Disable Context",
+  "EnableContext": "Enable Context",
+  "ClearContext": "Clear context",
   "DeletedContext": "Context has been deleted",
   "GetContact": "Owner's contact",
   "MyId": "My ID"

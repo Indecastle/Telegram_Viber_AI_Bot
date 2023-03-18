@@ -51,8 +51,8 @@ public static class TelegramInlineMenus
                 BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu),
             });
 
-    public static InlineKeyboardMarkup SettingsMenu(IJsonStringLocalizer localizer) =>
-        new(
+    public static InlineKeyboardMarkup SettingsMenu(IJsonStringLocalizer localizer, TelegramUser user) =>
+        new(TelegramMessageHelper.RemoveNullObjects(
             new[]
             {
                 new[]
@@ -64,11 +64,16 @@ public static class TelegramInlineMenus
                 },
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData(localizer.GetString("DeleteContext"),
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "DeleteContext")),
+                    InlineKeyboardButton.WithCallbackData(
+                        localizer.GetString(user.EnabledContext ? "DisableContext" : "EnableContext"),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "SwitchContext")),
+                    !user.EnabledContext || !user.Messages.Any()
+                        ? null
+                        : InlineKeyboardButton.WithCallbackData(localizer.GetString("ClearContext"),
+                            TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "ClearContext")),
                 },
                 BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu),
-            });
+            }));
 
     public static string GetSettingsText(IJsonStringLocalizer l, TelegramUser user)
     {
@@ -77,14 +82,14 @@ public static class TelegramInlineMenus
         str.AppendLine(l.GetString("SettingsText.Title"));
         str.AppendLine(l.GetString("SettingsText.Language") + user.Language);
         str.AppendLine(l.GetString("SettingsText.Mode") + l.GetString("SelectedMode_" + user.SelectedMode.Value));
-        // str.Append(l.GetString("SettingsText.Mode") + "gpt-3.5-turbo");
 
         if (user.SelectedMode == SelectedMode.Chat)
         {
             str.AppendLine(l.GetString("SettingsText.ChatModel") + "chat-3.5-turbo");
             str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
-            str.AppendLine(l.GetString("SettingsText.Context",
-                user.Messages.Count / 2, Constants.MAX_STORED_MESSAGES / 2));
+            if (user.EnabledContext)
+                str.AppendLine(l.GetString("SettingsText.Context",
+                    user.Messages.Count / 2, Constants.MAX_STORED_MESSAGES / 2));
         }
         else
         {

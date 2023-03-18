@@ -102,7 +102,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: TelegramInlineMenus.GetSettingsText(_localizer, user),
-            replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer),
+            replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }

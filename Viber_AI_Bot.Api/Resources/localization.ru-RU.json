@@ -14,7 +14,7 @@
   "Back": "Вернуться обратно",
   "SelectedMode_Chat": "Режим чат-бота",
   "SelectedMode_Image": "Режим генерации изображений",
-  "DeleteContext": "Удалить контекст",
+  "ClearContext": "Удалить контекст",
   "DeletedContext": "Контекст был удалён",
   "GetContact": "Контакт владельца",
   "MyId": "Мой ID"

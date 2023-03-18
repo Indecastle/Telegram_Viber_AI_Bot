@@ -53,8 +53,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 chatId: message.Chat.Id,
                 text: _localizer.GetString("NoBalance"),
                 // replyMarkup: new ReplyKeyboardRemove(),
-                cancellationToken: cancellationToken
-                );
+                cancellationToken: cancellationToken);
             return;
         }
 
