@@ -43,7 +43,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
 
     public async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From);
+        var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
         TelegramMessageHelper.SetCulture(user.Language);
         
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
