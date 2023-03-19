@@ -81,18 +81,21 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
 
     async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken ct)
     {
-        try
+        Task.Run(async () =>
         {
-            using var scope = _serviceProvider.CreateScope();
-            IUpdateHandler updateHandler = scope.ServiceProvider.GetRequiredService<UpdateHandler>();
-            await updateHandler.HandleUpdateAsync(bot, update, ct);
-        }
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                IUpdateHandler updateHandler = scope.ServiceProvider.GetRequiredService<UpdateHandler>();
+                await updateHandler.HandleUpdateAsync(bot, update, ct);
+            }
 #pragma warning disable CA1031
-        catch (Exception ex)
-        {
-            _logger.LogError($"Exception while handling {update.Type}: {ex}");
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception while handling {update.Type}: {ex}");
+            }
 #pragma warning restore CA1031
+        }, ct);
     }
 
     Task PollingErrorHandler(ITelegramBotClient bot, Exception ex, CancellationToken ct)
