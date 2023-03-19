@@ -32,5 +32,6 @@
   "ClearContext": "Clear context",
   "DeletedContext": "Context has been deleted",
   "GetContact": "Owner's contact",
-  "MyId": "My ID"
+  "MyId": "My ID",
+  "Wait": "Please wait..."
 }

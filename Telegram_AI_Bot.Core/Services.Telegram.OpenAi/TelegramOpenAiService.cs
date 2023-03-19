@@ -1,5 +1,6 @@
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
+using MoreLinq.Extensions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -59,17 +60,24 @@ public class TelegramOpenAiService : ITelegramOpenAiService
 
         if (storedUser.SelectedMode == SelectedMode.Chat)
         {
+            var waitMessage = await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: _localizer.GetString("Wait"),
+                // replyMarkup: new ReplyKeyboardRemove(),
+                cancellationToken: cancellationToken);
+            
             var textResult = await _openAiService.ChatHandler(message.Text, storedUser);
 
-            if (!string.IsNullOrEmpty(textResult))
+            if (string.IsNullOrEmpty(textResult))
+                await _botClient.EditMessageTextAsync(
+                    chatId: message.Chat.Id,
+                    messageId: waitMessage.MessageId,
+                    text: "bad request",
+                    cancellationToken: cancellationToken);
+            else
                 await _unitOfWork.CommitAsync();
 
-            await _botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: string.IsNullOrEmpty(textResult) ? "bad request" : textResult,
-                // replyMarkup: new ReplyKeyboardRemove(),
-                cancellationToken: cancellationToken
-            );
+            await SendTextMessage(message, waitMessage.MessageId, textResult, cancellationToken);
         }
         else
         {
@@ -78,8 +86,34 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             await _botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,
                 photo: new InputFileUrl(url),
-                // replyMarkup: new ReplyKeyboardRemove(),
                 cancellationToken: cancellationToken);
+        }
+    }
+
+    private async Task SendTextMessage(Message? message, int waitMessageId, string? textResult, CancellationToken cancellationToken)
+    {
+        var chunks = textResult!.Batch(4096)
+            .Select(x => new string(x.ToArray()))
+            .ToArray();
+        
+        for (int i = 0; i < chunks.Length; i++)
+        {
+            var text = chunks[i];
+                
+            if (i == 0)
+                await _botClient.EditMessageTextAsync(
+                    chatId: message.Chat.Id,
+                    messageId: waitMessageId,
+                    text: text,
+                    cancellationToken: cancellationToken);
+            else
+                await _botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: text,
+                    cancellationToken: cancellationToken);
+
+            if (i != chunks.Length-1)
+                await Task.Delay(1000, cancellationToken);
         }
     }
 }

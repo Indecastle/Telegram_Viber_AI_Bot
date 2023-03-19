@@ -60,7 +60,7 @@ public class OpenAiService : IOpenAiService
 
         if (user.IsEnabledContext())
             resultDialog = resultDialog.Concat(
-                user.Messages.OrderBy(x => x.CreatedAt).ThenBy(x => x.IsMe)
+                user.Messages.OrderBy(x => x.CreatedAt).ThenByDescending(x => x.IsMe)
                     .TakeWhile(x => x.CreatedAt < _dateTimeProvider.UtcNow)
                     .Select(x => new ChatPrompt(x.IsMe ? "user" : "assistant", x.Text)).ToArray());
 

@@ -61,7 +61,7 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
                 
                 _botClient.StartReceiving(HandleUpdateAsync, PollingErrorHandler, receiverOptions, cts.Token);
 
-                Console.WriteLine($"Start listening for @{me.Username}");
+                _logger.LogWarning($"Start listening for @{me.Username}");
                 Console.ReadLine();
 
                 cts.Cancel();
@@ -90,14 +90,14 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
 #pragma warning disable CA1031
         catch (Exception ex)
         {
-            Console.WriteLine($"Exception while handling {update.Type}: {ex}");
+            _logger.LogError($"Exception while handling {update.Type}: {ex}");
         }
 #pragma warning restore CA1031
     }
 
     Task PollingErrorHandler(ITelegramBotClient bot, Exception ex, CancellationToken ct)
     {
-        Console.WriteLine($"Exception while polling for updates: {ex}");
+        _logger.LogError($"Exception while polling for updates: {ex}");
         return Task.CompletedTask;
     }
 }
