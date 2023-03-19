@@ -21,6 +21,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public string Language { get; set; }
     public long Balance { get; set; }
     public bool EnabledContext { get; protected set; }
+    public bool EnabledStreamingChat { get; protected set; }
     public SelectedMode SelectedMode { get; set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
@@ -63,6 +64,11 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         EnabledContext = !EnabledContext;
     }
     
+    public void SwitchEnabledStreamingChat()
+    {
+        EnabledStreamingChat = !EnabledStreamingChat;
+    }
+    
     public static async Task<TelegramUser> NewClientAsync(
         long userId,
         Name name,
@@ -70,7 +76,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         int balance,
         bool enabledContext)
     {
-        return await NewAsync(userId, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER, enabledContext);
+        return await NewAsync(userId, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER, enabledContext, false);
     }
 
     private static async Task<TelegramUser> NewAsync(
@@ -80,7 +86,8 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         int balance,
         SelectedMode selectedMode,
         Role role,
-        bool enabledContext)
+        bool enabledContext,
+        bool enabledStreamingChat)
     {
         Asserts.Arg(role).NotNull();
         Asserts.Arg(name).NotNull();
@@ -96,6 +103,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
             SelectedMode = selectedMode,
             Role = role,
             EnabledContext = enabledContext,
+            EnabledStreamingChat = enabledStreamingChat,
         };
         return user;
     }
@@ -157,5 +165,10 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public bool IsEnabledContext()
     {
         return EnabledContext;
+    }
+    
+    public bool IsEnabledStreamingChat()
+    {
+        return EnabledStreamingChat;
     }
 }

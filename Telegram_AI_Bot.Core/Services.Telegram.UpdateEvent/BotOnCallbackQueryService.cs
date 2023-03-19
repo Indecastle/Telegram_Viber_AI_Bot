@@ -128,6 +128,9 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             case "SwitchContext": 
                 user.SwitchEnablingContext();
                 break;
+            case "SwitchStreamingChat":
+                user.SwitchEnabledStreamingChat();
+                break;
             case "ClearContext":
                 if (user.ClearContext())
                     await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer.GetString("DeletedContext"),

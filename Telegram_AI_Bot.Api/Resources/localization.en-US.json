@@ -12,7 +12,9 @@
     "ChatModel": "Model: ",
     "ImageModel": "Model: ",
     "MaxContextTokens": "Max tokens: ",
-    "Context": "Context: {0}/{1} messages"
+    "Context": "Context: {0}/{1} messages",
+    "EnabledContext": "Context: ",
+    "EnabledStreamingChat": "Streaming message: "
   },
   "Help": "Help",
   "ChangeLanguage": "Change language",
@@ -29,6 +31,8 @@
   "SelectedMode_Image": "\uD83D\uDD25image\uD83D\uDD25",
   "DisableContext": "Disable Context",
   "EnableContext": "Enable Context",
+  "DisableStreamingChat": "Disable streaming (beta)",
+  "EnableStreamingChat": "Enable streaming (beta)",
   "ClearContext": "Clear context",
   "DeletedContext": "Context has been deleted",
   "GetContact": "Owner's contact",

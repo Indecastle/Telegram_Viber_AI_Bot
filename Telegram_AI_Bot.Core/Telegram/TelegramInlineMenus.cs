@@ -64,13 +64,23 @@ public static class TelegramInlineMenus
                 },
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData(
-                        localizer.GetString(user.EnabledContext ? "DisableContext" : "EnableContext"),
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "SwitchContext")),
-                    !user.EnabledContext || !user.Messages.Any()
-                        ? null
-                        : InlineKeyboardButton.WithCallbackData(localizer.GetString("ClearContext"),
-                            TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "ClearContext")),
+                    user.SelectedMode == SelectedMode.Chat
+                        ? InlineKeyboardButton.WithCallbackData(
+                            localizer.GetString(user.EnabledContext ? "DisableContext" : "EnableContext"),
+                            TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "SwitchContext"))
+                        : null,
+                    user.SelectedMode == SelectedMode.Chat && user.EnabledContext && user.Messages.Any()
+                        ? InlineKeyboardButton.WithCallbackData(localizer.GetString("ClearContext"),
+                            TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "ClearContext"))
+                        : null,
+                },
+                new[]
+                {
+                    user.SelectedMode == SelectedMode.Chat
+                        ? InlineKeyboardButton.WithCallbackData(
+                            localizer.GetString(user.EnabledStreamingChat ? "DisableStreamingChat" : "EnableStreamingChat"),
+                            TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "SwitchStreamingChat"))
+                        : null,
                 },
                 BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu),
             }));
@@ -86,10 +96,14 @@ public static class TelegramInlineMenus
         if (user.SelectedMode == SelectedMode.Chat)
         {
             str.AppendLine(l.GetString("SettingsText.ChatModel") + "chat-3.5-turbo");
-            str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
+            // str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
+            str.AppendLine(l.GetStringYesNo("SettingsText.EnabledContext", user.EnabledContext));
             if (user.EnabledContext)
+            {
                 str.AppendLine(l.GetString("SettingsText.Context",
                     user.Messages.Count / 2, Constants.MAX_STORED_MESSAGES / 2));
+                str.AppendLine(l.GetStringYesNo("SettingsText.EnabledStreamingChat", user.EnabledStreamingChat));
+            }
         }
         else
         {

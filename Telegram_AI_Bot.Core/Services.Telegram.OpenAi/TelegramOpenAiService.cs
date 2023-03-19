@@ -1,3 +1,4 @@
+using System.Text;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using MoreLinq.Extensions;
@@ -6,6 +7,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
+using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Services.OpenAi;
@@ -60,24 +62,10 @@ public class TelegramOpenAiService : ITelegramOpenAiService
 
         if (storedUser.SelectedMode == SelectedMode.Chat)
         {
-            var waitMessage = await _botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: _localizer.GetString("Wait"),
-                // replyMarkup: new ReplyKeyboardRemove(),
-                cancellationToken: cancellationToken);
-            
-            var textResult = await _openAiService.ChatHandler(message.Text, storedUser);
-
-            if (string.IsNullOrEmpty(textResult))
-                await _botClient.EditMessageTextAsync(
-                    chatId: message.Chat.Id,
-                    messageId: waitMessage.MessageId,
-                    text: "bad request",
-                    cancellationToken: cancellationToken);
+            if (storedUser.IsEnabledStreamingChat())
+                await SendGradually(message, storedUser, cancellationToken);
             else
-                await _unitOfWork.CommitAsync();
-
-            await SendTextMessage(message, waitMessage.MessageId, textResult, cancellationToken);
+                await SendImmediately(message, storedUser, cancellationToken);
         }
         else
         {
@@ -88,6 +76,28 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 photo: new InputFileUrl(url),
                 cancellationToken: cancellationToken);
         }
+    }
+
+    private async Task SendImmediately(Message message, TelegramUser storedUser, CancellationToken cancellationToken)
+    {
+        var waitMessage = await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: _localizer.GetString("Wait"),
+            // replyMarkup: new ReplyKeyboardRemove(),
+            cancellationToken: cancellationToken);
+            
+        var textResult = await _openAiService.ChatHandler(message.Text, storedUser);
+
+        if (string.IsNullOrEmpty(textResult))
+            await _botClient.EditMessageTextAsync(
+                chatId: message.Chat.Id,
+                messageId: waitMessage.MessageId,
+                text: "bad request",
+                cancellationToken: cancellationToken);
+        else
+            await _unitOfWork.CommitAsync();
+
+        await SendTextMessage(message, waitMessage.MessageId, textResult, cancellationToken);
     }
 
     private async Task SendTextMessage(Message? message, int waitMessageId, string? textResult, CancellationToken cancellationToken)
@@ -115,5 +125,56 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             if (i != chunks.Length-1)
                 await Task.Delay(1000, cancellationToken);
         }
+    }
+    
+    private async Task SendGradually(Message message, TelegramUser storedUser, CancellationToken cancellationToken)
+    {
+        Message? waitMessage = null;
+        var strBuilder = new StringBuilder();
+        Task delaier = Task.Delay(1000);
+        
+        await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser))
+        {
+            if (waitMessage is null)
+            {
+                waitMessage = await _botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: ".",
+                    cancellationToken: cancellationToken);
+            }
+            
+            strBuilder.Append(result.FirstChoice);
+            
+            if (string.IsNullOrWhiteSpace(result.FirstChoice))
+                continue;
+            
+            if (strBuilder.Length < 4096)
+            {
+                if (delaier.IsCompleted)
+                {
+                    delaier = Task.Delay(1000);
+                    await _botClient.EditMessageTextAsync(
+                        chatId: message.Chat.Id,
+                        messageId: waitMessage.MessageId,
+                        text: strBuilder.ToString(),
+                        cancellationToken: cancellationToken);
+                }
+            }
+            else
+            {
+                strBuilder.Clear();
+                strBuilder.Append(result.FirstChoice);
+                waitMessage = await _botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: result.FirstChoice,
+                    cancellationToken: cancellationToken);
+            }
+        }
+        
+        await _botClient.EditMessageTextAsync(
+            chatId: message.Chat.Id,
+            messageId: waitMessage.MessageId,
+            text: strBuilder.ToString(),
+            cancellationToken: cancellationToken);
     }
 }

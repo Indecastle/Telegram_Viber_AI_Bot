@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.Extensions.Options;
 using OpenAI;
 using OpenAI.Chat;
@@ -9,6 +10,7 @@ namespace Telegram_AI_Bot.Core.Services.OpenAi;
 public interface IOpenAiService
 {
     Task<string?> ChatHandler(string requestText, IOpenAiUser user);
+    IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user);
     Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small);
 }
 
@@ -32,24 +34,37 @@ public class OpenAiService : IOpenAiService
 
     public async Task<string?> ChatHandler(string requestText, IOpenAiUser user)
     {
-        var now = DateTimeOffset.UtcNow;
         requestText = requestText.Trim();
 
         var chatRequest = GetChatRequest(requestText, user);
         var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest);
 
-        var text = result.Choices[0].Message.ToString().Trim();
+        var resultText = result.Choices[0].Message.ToString().Trim();
 
-        if (user.IsEnabledContext())
-        {
-            user.AddMessage(requestText, true, now);
-            user.AddMessage(text, false, now);
-            user.RemoveUnnecessary();
-        }
-
+        UserContextHandler(user, requestText, resultText);
         user.ReduceChatTokens(result.Usage.TotalTokens);
 
-        return text;
+        return resultText;
+    }
+
+    public async IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user)
+    {
+        requestText = requestText.Trim();
+
+        var chatRequest = GetChatRequest(requestText, user);
+
+        var strBuilder = new StringBuilder();
+        var tokens = 0;
+
+        await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest))
+        {
+            strBuilder.Append(result.FirstChoice);
+            tokens += result.Usage?.TotalTokens ?? 0;
+            yield return result;
+        }
+
+        UserContextHandler(user, requestText, strBuilder.ToString());
+        user.ReduceChatTokens(tokens);
     }
 
     public ChatRequest GetChatRequest(string requestText, IOpenAiUser user)
@@ -80,5 +95,17 @@ public class OpenAiService : IOpenAiService
     {
         var results = await _api.ImagesEndPoint.GenerateImageAsync(prompt, numberOfResults, size);
         return results.ToArray();
+    }
+
+    public void UserContextHandler(IOpenAiUser user, string requestText, string resultText)
+    {
+        var now = _dateTimeProvider.UtcNow;
+        
+        if (user.IsEnabledContext())
+        {
+            user.AddMessage(requestText, true, now);
+            user.AddMessage(resultText, false, now);
+            user.RemoveUnnecessary();
+        }
     }
 }

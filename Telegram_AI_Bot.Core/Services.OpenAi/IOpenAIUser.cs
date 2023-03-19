@@ -18,4 +18,5 @@ public interface IOpenAiUser
     void SetLanguage(string lang);
     void SwitchMode();
     bool IsEnabledContext();
+    bool IsEnabledStreamingChat();
 }

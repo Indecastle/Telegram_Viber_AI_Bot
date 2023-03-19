@@ -68,6 +68,11 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         return true;
     }
     
+    public bool IsEnabledStreamingChat()
+    {
+        return false;
+    }
+    
     public static async Task<ViberUser> NewClientAsync(
         string userId,
         string name,

@@ -12,7 +12,9 @@
     "ChatModel": "Модель: ",
     "ImageModel": "Модель: ",
     "MaxContextTokens": "Максимальное кол-во токенов: ",
-    "Context": "Контекст: {0}/{1} сообщений"
+    "Context": "Контекст: {0}/{1} сообщений",
+    "EnabledContext": "История сообщений: ",
+    "EnabledStreamingChat": "Постепенный вывод: "
   },
   "Help": "Помощь",
   "ChangeLanguage": "Сменить язык",
@@ -29,6 +31,8 @@
   "SelectedMode_Image": "\uD83D\uDD25изображения\uD83D\uDD25",
   "DisableContext": "Выключить контекст",
   "EnableContext": "Включить контекст",
+  "DisableStreamingChat": "Выключить постепенный вывод (beta)",
+  "EnableStreamingChat": "Включить постепенный вывод (beta)",
   "ClearContext": "Очистить контекст",
   "DeletedContext": "Контекст был удалён",
   "GetContact": "Контакт владельца",
