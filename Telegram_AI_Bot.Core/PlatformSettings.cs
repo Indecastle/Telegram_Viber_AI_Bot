@@ -4,7 +4,7 @@ namespace Telegram_AI_Bot.Core;
 
 public static class PlatformSettings
 {
-    public static readonly TimeSpan TIME_OFFSET = new TimeSpan(0, 0, 0); // CST
+    public static readonly TimeSpan TIME_OFFSET = new TimeSpan(3, 0, 0); // CST
 
     public static DateTimeOffset GetLocalDate(DateTimeOffset date)
     {

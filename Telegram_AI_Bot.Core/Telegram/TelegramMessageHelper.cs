@@ -19,9 +19,9 @@ public static class TelegramMessageHelper
         }
     }
     
-    public static string SetDefaultCulture(string senderLanguage)
+    public static string SetDefaultCulture(string? senderLanguage)
     {
-        var targetLang = senderLanguage.ToLowerInvariant() switch
+        var targetLang = senderLanguage?.ToLowerInvariant() switch
         {
             "ru" => "ru-RU",
             "by" => "ru-RU",

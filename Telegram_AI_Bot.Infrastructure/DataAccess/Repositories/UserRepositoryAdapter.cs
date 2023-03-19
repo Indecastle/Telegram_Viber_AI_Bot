@@ -31,10 +31,16 @@ internal class UserRepositoryAdapter : IUserRepository
         {
             var lang = TelegramMessageHelper.SetDefaultCulture(internalUser.LanguageCode);
             var entryEntity = await _dbContext.Users.AddAsync(
-                await TelegramUser.NewClientAsync(internalUser.Id, new Name(internalUser.FirstName, internalUser.LastName), lang, Constants.FREE_START_BALANCE, true));
+                await TelegramUser.NewClientAsync(internalUser.Id, internalUser.Username, new Name(internalUser.FirstName, internalUser.LastName), lang, Constants.FREE_START_BALANCE, true));
 
             await _dbContext.SaveChangesAsync();
             return entryEntity.Entity;
+        }
+
+        if (user.IsNeedUpdateBaseInfo(internalUser))
+        {
+            user.UpdateBaseInfo(internalUser);
+            await _dbContext.SaveChangesAsync();
         }
 
         return user;

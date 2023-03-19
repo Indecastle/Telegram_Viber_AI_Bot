@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using MyTemplate.App.Core.Models.Types;
 using OpenAI.Images;
+using Telegram.Bot.Types;
 using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
@@ -18,6 +19,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public Guid Id { get; protected set; }
     public long UserId { get; protected set; }
     public Name Name { get; protected set; }
+    public string? Username { get; protected set; }
     public string Language { get; set; }
     public long Balance { get; set; }
     public bool EnabledContext { get; protected set; }
@@ -25,6 +27,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public SelectedMode SelectedMode { get; set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
+    public DateTimeOffset StartAt { get; protected set; }
     public IReadOnlyCollection<OpenAiMessage> Messages => _messages.AsReadOnly();
 
     public ICollection<INotification> Events { get; } = new List<INotification>();
@@ -32,6 +35,11 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public void SetName(Name name)
     {
         Name = name;
+    }
+    
+    public void SetUserName(string userName)
+    {
+        Username = userName;
     }
 
     public void ChangeAvatar(string avatarReference)
@@ -71,23 +79,26 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     
     public static async Task<TelegramUser> NewClientAsync(
         long userId,
+        string? userName,
         Name name,
         string language,
         int balance,
         bool enabledContext)
     {
-        return await NewAsync(userId, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER, enabledContext, false);
+        return await NewAsync(userId, userName, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER, enabledContext, false, DateTimeOffset.UtcNow);
     }
 
     private static async Task<TelegramUser> NewAsync(
         long userId,
+        string? userName,
         Name name,
         string language,
         int balance,
         SelectedMode selectedMode,
         Role role,
         bool enabledContext,
-        bool enabledStreamingChat)
+        bool enabledStreamingChat,
+        DateTimeOffset startAt)
     {
         Asserts.Arg(role).NotNull();
         Asserts.Arg(name).NotNull();
@@ -98,12 +109,14 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
             
             UserId = userId,
             Name = name ?? throw new ArgumentNullException(nameof(name)),
+            Username = userName,
             Language = language,
             Balance = balance,
             SelectedMode = selectedMode,
             Role = role,
             EnabledContext = enabledContext,
             EnabledStreamingChat = enabledStreamingChat,
+            StartAt = startAt,
         };
         return user;
     }
@@ -170,5 +183,16 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public bool IsEnabledStreamingChat()
     {
         return EnabledStreamingChat;
+    }
+
+    public bool IsNeedUpdateBaseInfo(User internalUser) =>
+        internalUser.FirstName != Name.FirstName
+        || internalUser.LastName != Name.LastName
+        || internalUser.Username != Username;
+
+    public void UpdateBaseInfo(User internalUser)
+    {
+        Name = new Name(internalUser.FirstName, internalUser.LastName);
+        Username = internalUser.Username;
     }
 }
