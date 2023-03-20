@@ -33,7 +33,7 @@ public class OpenAiService : IOpenAiService
     {
         _dateTimeProvider = dateTimeProvider;
         _openAiOptions = openAiOptions.Value;
-        _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, null), new OpenAIClientSettings());
+        _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, _openAiOptions.OrganizationId));
     }
 
     public async Task<string?> ChatHandler(string requestText, IOpenAiUser user)
