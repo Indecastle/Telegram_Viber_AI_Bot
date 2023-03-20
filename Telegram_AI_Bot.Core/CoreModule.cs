@@ -23,7 +23,7 @@ public static class CoreModule
             .AddScoped<IBotOnCallbackQueryService, BotOnCallbackQueryService>();
 
         services
-            .AddSingleton<IOpenAiService, OpenAiService>();
+            .AddScoped<IOpenAiService, OpenAiService>();
             
         return services;
     }
@@ -38,7 +38,7 @@ public static class CoreModule
             .AddScoped<IViberOpenAiService, ViberOpenAiService>();
         
         services
-            .AddSingleton<IOpenAiService, OpenAiService>();
+            .AddScoped<IOpenAiService, OpenAiService>();
 
         return services;
     }
