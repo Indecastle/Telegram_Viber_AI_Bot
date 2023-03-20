@@ -28,6 +28,8 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     private readonly IOpenAiService _openAiService;
     private readonly IJsonStringLocalizer _localizer;
 
+    private static readonly int _streamDelayMilliseconds = 2000;
+
     public TelegramOpenAiService(
         ITelegramBotClient botClient,
         IUserRepository userRepository,
@@ -138,7 +140,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     {
         Message? waitMessage = null;
         var strBuilder = new StringBuilder();
-        Task delaier = Task.Delay(1000);
+        Task delaier = Task.Delay(0);
         
         await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser))
         {
@@ -159,7 +161,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             {
                 if (delaier.IsCompleted)
                 {
-                    delaier = Task.Delay(1000);
+                    delaier = Task.Delay(_streamDelayMilliseconds);
                     await _botClient.EditMessageTextAsync(
                         chatId: message.Chat.Id,
                         messageId: waitMessage.MessageId,
