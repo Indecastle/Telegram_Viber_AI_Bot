@@ -12,6 +12,7 @@
         <PackageReference Include="morelinq" Version="3.4.1" />
         <PackageReference Include="OpenAI-DotNet" Version="6.3.1" />
         <PackageReference Include="Telegram.Bot" Version="19.0.0-preview.2" />
+        <PackageReference Include="TiktokenSharp" Version="1.0.2" />
         <PackageReference Include="Viber.Bot.NetCore" Version="1.1.1" />
         <PackageReference Include="Webinex.Coded" Version="0.0.2" />
         <PackageReference Include="Webinex.Flippo.Abstractions" Version="0.0.2" />

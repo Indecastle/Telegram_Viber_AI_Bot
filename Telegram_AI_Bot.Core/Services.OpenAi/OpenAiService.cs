@@ -1,8 +1,11 @@
 using System.Text;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Images;
+using OpenAI.Models;
+using TiktokenSharp;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 
 namespace Telegram_AI_Bot.Core.Services.OpenAi;
@@ -18,6 +21,7 @@ public class OpenAiService : IOpenAiService
 {
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
     private static readonly ChatPrompt[] TemplateSystemChatPrompt = { new("system", "You are a helpful assistant.") };
+    private static readonly TikToken _tikToken = TikToken.EncodingForModel("gpt-3.5-turbo");
 
     private readonly OpenAiConfiguration _openAiOptions;
     private readonly OpenAIClient _api;
@@ -29,7 +33,7 @@ public class OpenAiService : IOpenAiService
     {
         _dateTimeProvider = dateTimeProvider;
         _openAiOptions = openAiOptions.Value;
-        _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, null));
+        _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, null), new OpenAIClientSettings());
     }
 
     public async Task<string?> ChatHandler(string requestText, IOpenAiUser user)
@@ -38,9 +42,9 @@ public class OpenAiService : IOpenAiService
 
         var chatRequest = GetChatRequest(requestText, user);
         var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest);
-
-        var resultText = result.Choices[0].Message.ToString().Trim();
-
+        var resultText = result.FirstChoice.Message.ToString().Trim();
+        
+        // string jsonString = JsonConvert.SerializeObject(chatRequest.Messages);
         UserContextHandler(user, requestText, resultText);
         user.ReduceChatTokens(result.Usage.TotalTokens);
 
@@ -54,17 +58,24 @@ public class OpenAiService : IOpenAiService
         var chatRequest = GetChatRequest(requestText, user);
 
         var strBuilder = new StringBuilder();
-        var tokens = 0;
 
-        await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest))
+        try
         {
-            strBuilder.Append(result.FirstChoice);
-            tokens += result.Usage?.TotalTokens ?? 0;
-            yield return result;
+            await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest))
+            {
+                strBuilder.Append(result.FirstChoice);
+                yield return result;
+            }
         }
+        finally
+        {
+            string chatRequestJson = JsonConvert.SerializeObject(chatRequest.Messages);
+            int tokens1 = _tikToken.Encode(chatRequestJson).Count;
+            int tokens2 = _tikToken.Encode(strBuilder.ToString()).Count;
 
-        UserContextHandler(user, requestText, strBuilder.ToString());
-        user.ReduceChatTokens(tokens);
+            UserContextHandler(user, requestText, strBuilder.ToString());
+            user.ReduceChatTokens(tokens1 + tokens2 + 1);
+        }
     }
 
     public ChatRequest GetChatRequest(string requestText, IOpenAiUser user)
@@ -81,7 +92,7 @@ public class OpenAiService : IOpenAiService
 
         resultDialog = resultDialog.Concat(new[] { newPromptMessage });
 
-        return new ChatRequest(resultDialog);
+        return new ChatRequest(resultDialog, model: Model.GPT3_5_Turbo);
     }
 
     public async Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small)

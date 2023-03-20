@@ -63,7 +63,14 @@ public class TelegramOpenAiService : ITelegramOpenAiService
         if (storedUser.SelectedMode == SelectedMode.Chat)
         {
             if (storedUser.IsEnabledStreamingChat())
-                await SendGradually(message, storedUser, cancellationToken);
+                try
+                {
+                    await SendGradually(message, storedUser, cancellationToken);
+                }
+                finally
+                {
+                    await _unitOfWork.CommitAsync();
+                }
             else
                 await SendImmediately(message, storedUser, cancellationToken);
         }
@@ -170,7 +177,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                     cancellationToken: cancellationToken);
             }
         }
-        
+
         await _botClient.EditMessageTextAsync(
             chatId: message.Chat.Id,
             messageId: waitMessage.MessageId,

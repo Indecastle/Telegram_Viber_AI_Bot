@@ -102,8 +102,8 @@ public static class TelegramInlineMenus
             {
                 str.AppendLine(l.GetString("SettingsText.Context",
                     user.Messages.Count / 2, Constants.MAX_STORED_MESSAGES / 2));
-                str.AppendLine(l.GetStringYesNo("SettingsText.EnabledStreamingChat", user.EnabledStreamingChat));
             }
+            str.AppendLine(l.GetStringYesNo("SettingsText.EnabledStreamingChat", user.EnabledStreamingChat));
         }
         else
         {

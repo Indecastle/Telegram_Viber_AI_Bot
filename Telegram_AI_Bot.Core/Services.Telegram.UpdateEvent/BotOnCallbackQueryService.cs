@@ -56,18 +56,6 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         };
 
         await action;
-
-        // await _botClient.AnswerCallbackQueryAsync(
-        //     callbackQueryId: callbackQuery.Id,
-        //     text: $"Received {callbackQuery.Data}",
-        //     cancellationToken: cancellationToken);
-
-        // await _botClient.SendTextMessageAsync(
-        //     chatId: callbackQuery.Message!.Chat.Id,
-        //     text: $"Received {callbackQuery.Data}",
-        //     cancellationToken: cancellationToken);
-
-        await _unitOfWork.CommitAsync();
     }
 
     private async Task KeyboardHandle(CallbackQuery callbackQuery, CancellationToken cancellationToken)
@@ -89,9 +77,6 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             TelegramCommands.Keyboard.Settings_SetLanguage => KeyboardLanguage(callbackQuery, args, user,
                 cancellationToken),
             TelegramCommands.Keyboard.Help => KeyboardHelp(callbackQuery, args, cancellationToken),
-            // TelegramKeyboardCommands.Settings => KeyboardSettings(callbackQuery, user, args),
-            // TelegramKeyboardCommands.Settings_SetLanguage => KeyboardSettingsLanguage(callbackQuery, user, args),
-            // TelegramKeyboardCommands.Help => KeyboardHelp(callbackQuery, user, args),
         };
 
         await action;
@@ -147,6 +132,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
+        
+        await _unitOfWork.CommitAsync();
     }
 
     private async Task KeyboardLanguage(CallbackQuery callbackQuery, string[] args, TelegramUser user,
@@ -170,6 +157,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             text: _localizer.GetString("Language.Title"),
             replyMarkup: TelegramInlineMenus.LanguageMenu(_localizer),
             cancellationToken: cancellationToken);
+        
+        await _unitOfWork.CommitAsync();
     }
 
     private async Task KeyboardHelp(CallbackQuery callbackQuery, string[] args, CancellationToken cancellationToken)
@@ -181,129 +170,6 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             replyMarkup: TelegramInlineMenus.HelpMenu(_localizer),
             cancellationToken: cancellationToken);
     }
-
-    // Send inline keyboard
-    // You can process responses in BotOnCallbackQueryReceived handler
-    private async Task<Message> SendInlineKeyboard(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
-    {
-        await botClient.SendChatActionAsync(
-            chatId: message.Chat.Id,
-            chatAction: ChatAction.Typing,
-            cancellationToken: cancellationToken);
-
-        // Simulate longer running task
-        await Task.Delay(500, cancellationToken);
-
-        InlineKeyboardMarkup inlineKeyboard = new(
-            new[]
-            {
-                // first row
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("1.1", "11"),
-                    InlineKeyboardButton.WithCallbackData("1.2", "12"),
-                },
-                // second row
-                new[]
-                {
-                    InlineKeyboardButton.WithCallbackData("2.1", "21"),
-                    InlineKeyboardButton.WithCallbackData("2.2", "22"),
-                },
-            });
-
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "Choose",
-            replyMarkup: inlineKeyboard,
-            cancellationToken: cancellationToken);
-    }
-
-    private async Task<Message> SendReplyKeyboard(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
-    {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new(
-            new[]
-            {
-                new KeyboardButton[] { "1.1", "1.2" },
-                new KeyboardButton[] { "2.1", "2.2" },
-            })
-        {
-            ResizeKeyboard = true
-        };
-
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "Choose",
-            replyMarkup: replyKeyboardMarkup,
-            cancellationToken: cancellationToken);
-    }
-
-    private async Task<Message> RemoveKeyboard(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
-    {
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "Removing keyboard",
-            replyMarkup: new ReplyKeyboardRemove(),
-            cancellationToken: cancellationToken);
-    }
-
-    private async Task<Message> SendFile(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
-    {
-        await botClient.SendChatActionAsync(
-            message.Chat.Id,
-            ChatAction.UploadPhoto,
-            cancellationToken: cancellationToken);
-
-        const string filePath = "Files/tux.png";
-        await using FileStream fileStream = new(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-        var fileName = filePath.Split(Path.DirectorySeparatorChar).Last();
-
-        return await botClient.SendPhotoAsync(
-            chatId: message.Chat.Id,
-            photo: new InputFile(fileStream, fileName),
-            caption: "Nice Picture",
-            cancellationToken: cancellationToken);
-    }
-
-    private async Task<Message> RequestContactAndLocation(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
-    {
-        ReplyKeyboardMarkup RequestReplyKeyboard = new(
-            new[]
-            {
-                KeyboardButton.WithRequestLocation("Location"),
-                KeyboardButton.WithRequestContact("Contact"),
-            });
-
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "Who or Where are you?",
-            replyMarkup: RequestReplyKeyboard,
-            cancellationToken: cancellationToken);
-    }
-
-    private async Task<Message> StartInlineQuery(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
-    {
-        InlineKeyboardMarkup inlineKeyboard = new(
-            InlineKeyboardButton.WithSwitchInlineQueryCurrentChat("Inline Mode"));
-
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: "Press the button to start Inline Query",
-            replyMarkup: inlineKeyboard,
-            cancellationToken: cancellationToken);
-    }
-
-    private Task<Message> FailingHandler(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
-    {
-        throw new IndexOutOfRangeException();
-    }
-
 
     private async Task<Message> Usage(ITelegramBotClient botClient, Message message,
         CancellationToken cancellationToken)
