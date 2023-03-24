@@ -35,12 +35,6 @@ public class UpdateHandler : IUpdateHandler
     {
         var handler = update switch
         {
-            // UpdateType.Unknown:
-            // UpdateType.ChannelPost:
-            // UpdateType.EditedChannelPost:
-            // UpdateType.ShippingQuery:
-            // UpdateType.PreCheckoutQuery:
-            // UpdateType.Poll:
             { ChatJoinRequest: { } chatJoinRequest }                       => throw new NotImplementedException(),
             { Message: { } message }                       => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),
             { EditedMessage: { } message }                 => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),

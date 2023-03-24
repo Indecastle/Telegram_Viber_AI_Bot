@@ -175,15 +175,9 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         Balance = amount;
     }
 
-    public bool IsEnabledContext()
-    {
-        return EnabledContext;
-    }
-    
-    public bool IsEnabledStreamingChat()
-    {
-        return EnabledStreamingChat;
-    }
+    public bool IsEnabledContext() => EnabledContext;
+
+    public bool IsEnabledStreamingChat() => EnabledStreamingChat;
 
     public bool IsNeedUpdateBaseInfo(User internalUser) =>
         internalUser.FirstName != Name.FirstName
