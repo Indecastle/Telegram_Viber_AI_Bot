@@ -30,20 +30,6 @@ builder.Services.Configure<CommonConfiguration>(
 
 builder.Services.AddViberBotApi(builder.Configuration);
 
-// builder.Services.AddQuartz(q =>
-// {
-//     q.UseMicrosoftDependencyInjectionScopedJobFactory();
-//     // Just use the name of your job that you created in the Jobs folder.
-//     var jobKey = new JobKey("PostEndpointJob");
-//     q.AddJob<PostEndpointJob>(opts => opts.WithIdentity(jobKey));
-//     
-//     q.AddTrigger(opts => opts
-//         .ForJob(jobKey)
-//         .WithIdentity("PostEndpointJob-trigger")
-//     );
-// });
-// builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
-
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.PropertyNameCaseInsensitive = false;
@@ -70,7 +56,6 @@ builder.Services
 
 builder.Services
     .AddViberDataAccess(builder.Configuration)
-    .AddViberEvents(builder.Configuration, builder.Environment)
     .AddInfrastructureModule(builder.Configuration)
     .AddViberCoreModule();
 

@@ -83,7 +83,6 @@ builder.Services
 
 builder.Services
     .AddDataAccess(builder.Configuration)
-    .AddEvents(builder.Configuration, builder.Environment)
     .AddInfrastructureModule(builder.Configuration)
     .AddTelegramCoreModule();
 

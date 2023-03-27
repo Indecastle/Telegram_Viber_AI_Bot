@@ -1,5 +1,4 @@
-﻿using MediatR;
-using MyTemplate.App.Core.Models.Types;
+﻿using MyTemplate.App.Core.Models.Types;
 using OpenAI.Images;
 using Telegram.Bot.Types;
 using Telegram_AI_Bot.Core.Common;
@@ -29,8 +28,6 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public Role Role { get; protected set; }
     public DateTimeOffset StartAt { get; protected set; }
     public IReadOnlyCollection<OpenAiMessage> Messages => _messages.AsReadOnly();
-
-    public ICollection<INotification> Events { get; } = new List<INotification>();
 
     public void SetName(Name name)
     {
