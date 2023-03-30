@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
+using Telegram_AI_Bot.Core.Services.Telegram.Payments;
 using Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 using Telegram_AI_Bot.Core.Services.Viber.OpenAi;
 using Telegram_AI_Bot.Core.Services.Viber.TextReceivedService;
@@ -16,6 +17,7 @@ public static class CoreModule
         services
             .AddScoped<IBotOnMessageReceivedService, BotOnMessageReceivedService>()
             .AddScoped<ITelegramOpenAiService, TelegramOpenAiService>()
+            .AddScoped<ITelegramPaymentsService, TelegramPaymentsService>()
             .AddScoped<IBotOnCallbackQueryService, BotOnCallbackQueryService>();
 
         services

@@ -15,13 +15,14 @@ using Telegram_AI_Bot.Api.Services;
 using Telegram_AI_Bot.Core;
 using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram_AI_Bot.Core.Services.Telegram.Payments;
 using Telegram_AI_Bot.Core.Telegram.Options;
 using Telegram_AI_Bot.Infrastructure;
 using Viber.Bot.NetCore.Middleware;
 
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllers();
+// builder.Services.AddControllers();
 
 builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true);
 // Add services to the container.
@@ -33,6 +34,8 @@ builder.Services.Configure<OpenAiConfiguration>(
     builder.Configuration.GetSection(OpenAiConfiguration.Configuration));
 builder.Services.Configure<CommonConfiguration>(
     builder.Configuration.GetSection(CommonConfiguration.Configuration));
+builder.Services.Configure<PaymentsConfiguration>(
+    builder.Configuration.GetSection(PaymentsConfiguration.Configuration));
 
 builder.Services.Configure<HostOptions>(hostOptions =>
 {
@@ -88,8 +91,8 @@ builder.Services
 
 var app = builder.Build();
 
-app.UseCorrelationId();
+// app.UseCorrelationId();
 
-app.MapControllers();
+// app.MapControllers();
 
 app.Run();

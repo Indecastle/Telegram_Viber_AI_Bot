@@ -49,6 +49,11 @@ public static class TelegramInlineMenus
         new(
             new[]
             {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(localizer.GetString("Payments"),
+                        TelegramCommands.Keyboard.Payments),
+                },
                 BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu),
             });
 
@@ -103,7 +108,7 @@ public static class TelegramInlineMenus
 
         if (user.SelectedMode == SelectedMode.Chat)
         {
-            str.AppendLine(l.GetString("SettingsText.ChatModel") + user.ChatModel);
+            str.AppendLine(l.GetString("SettingsText.ChatModel") + "chat-3.5-turbo");
             // str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
             str.AppendLine(l.GetStringYesNo("SettingsText.EnabledContext", user.EnabledContext));
             if (user.EnabledContext)
@@ -169,5 +174,33 @@ public static class TelegramInlineMenus
                             ChatModel.Gpt4.Value)),
                 },
                 BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Settings),
+            });
+
+    public static InlineKeyboardMarkup Payments(IJsonStringLocalizer localizer) =>
+        new(
+            new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("Stripe",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe")),
+                },
+                BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Balance),
+            });
+
+    public static InlineKeyboardMarkup PaymentChoices(IJsonStringLocalizer localizer, string provider) =>
+        new(
+            new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData("$2",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe", "200")),
+                    InlineKeyboardButton.WithCallbackData("$5",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe", "500")),
+                    InlineKeyboardButton.WithCallbackData("$10",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe", "1000")),
+                },
+                BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Payments),
             });
 }

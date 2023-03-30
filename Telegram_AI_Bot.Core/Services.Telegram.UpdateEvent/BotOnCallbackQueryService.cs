@@ -4,11 +4,13 @@ using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.Payments;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
+using Telegram_AI_Bot.Core.Services.Telegram.Payments;
 using Telegram_AI_Bot.Core.Telegram;
 
 namespace Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
@@ -25,19 +27,22 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJsonStringLocalizer _localizer;
+    private readonly ITelegramPaymentsService _paymentsService;
 
     public BotOnCallbackQueryService(
         ITelegramBotClient botClient,
         ILogger<BotOnCallbackQueryService> logger,
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
-        IJsonStringLocalizer localizer)
+        IJsonStringLocalizer localizer,
+        ITelegramPaymentsService paymentsService)
     {
         _botClient = botClient;
         _logger = logger;
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _localizer = localizer;
+        _paymentsService = paymentsService;
     }
 
     public async Task Handler(CallbackQuery? callbackQuery, CancellationToken cancellationToken)
@@ -73,6 +78,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         {
             TelegramCommands.Keyboard.MainMenu => KeyboardMainMenu(callbackQuery, args, cancellationToken),
             TelegramCommands.Keyboard.Balance => KeyboardBalance(callbackQuery, args, user, cancellationToken),
+            TelegramCommands.Keyboard.Payments => KeyboardPayments(callbackQuery, args, user, cancellationToken),
             TelegramCommands.Keyboard.Settings => KeyboardSettings(callbackQuery, args, user, cancellationToken),
             TelegramCommands.Keyboard.Settings_SetChatModel => KeyboardSettingsChatModel(callbackQuery, args, user,
                 cancellationToken),
@@ -82,6 +88,36 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         };
 
         await action;
+    }
+
+    private async Task KeyboardPayments(CallbackQuery callbackQuery, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    {
+        if (args.Length == 1)
+        {
+            await _botClient.EditMessageTextAsync(
+                chatId: callbackQuery.Message!.Chat.Id,
+                messageId: callbackQuery.Message.MessageId,
+                text: _localizer.GetString("Payments"),
+                replyMarkup: TelegramInlineMenus.PaymentChoices(_localizer, args[0]),
+                parseMode: ParseMode.Html,
+                cancellationToken: cancellationToken);
+            return;
+        }
+        
+        if (args.Length == 2)
+        {
+            await _paymentsService.Handler(callbackQuery.From.Id, callbackQuery.Message!.MessageId, args, user,
+                cancellationToken);
+            return;
+        }
+
+        await _botClient.EditMessageTextAsync(
+            chatId: callbackQuery.Message!.Chat.Id,
+            messageId: callbackQuery.Message.MessageId,
+            text: _localizer.GetString("Payments"),
+            replyMarkup: TelegramInlineMenus.Payments(_localizer),
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
     }
 
     private async Task KeyboardSettingsChatModel(CallbackQuery callbackQuery, string[] args, TelegramUser user,

@@ -4,7 +4,10 @@ using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.InlineQueryResults;
+using Telegram.Bot.Types.Payments;
+using Telegram_AI_Bot.Core.Services.Telegram.Payments;
 using Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 
 namespace Telegram_AI_Bot.Api.Services;
@@ -16,19 +19,22 @@ public class UpdateHandler : IUpdateHandler
     private readonly IBotOnMessageReceivedService _botOnMessageReceivedService;
     private readonly IBotOnCallbackQueryService _botOnCallbackQueryService;
     private readonly IJsonStringLocalizer _localizer;
+    private readonly ITelegramPaymentsService _paymentsService;
 
     public UpdateHandler(
         ITelegramBotClient botClient,
         ILogger<UpdateHandler> logger,
         IBotOnMessageReceivedService botOnMessageReceivedService,
         IJsonStringLocalizer localizer,
-        IBotOnCallbackQueryService botOnCallbackQueryService)
+        IBotOnCallbackQueryService botOnCallbackQueryService,
+        ITelegramPaymentsService paymentsService)
     {
         _botClient = botClient;
         _logger = logger;
         _botOnMessageReceivedService = botOnMessageReceivedService;
         _localizer = localizer;
         _botOnCallbackQueryService = botOnCallbackQueryService;
+        _paymentsService = paymentsService;
     }
 
     public async Task HandleUpdateAsync(ITelegramBotClient _, Update update, CancellationToken cancellationToken)
@@ -36,17 +42,46 @@ public class UpdateHandler : IUpdateHandler
         var handler = update switch
         {
             { ChatJoinRequest: { } chatJoinRequest }                       => throw new NotImplementedException(),
+            // { Message: { Type: MessageType.SuccessfulPayment } SuccessPaymentMessage }                       => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),
             { Message: { } message }                       => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),
             { EditedMessage: { } message }                 => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),
             { CallbackQuery: { } callbackQuery }           => _botOnCallbackQueryService.Handler(callbackQuery, cancellationToken),
             { InlineQuery: { } inlineQuery }               => BotOnInlineQueryReceived(inlineQuery, cancellationToken),
             { ChosenInlineResult: { } chosenInlineResult } => BotOnChosenInlineResultReceived(chosenInlineResult, cancellationToken),
+            { PreCheckoutQuery: { } preCheckoutQuery } => BotPreCheckoutHandlerAsync(preCheckoutQuery, cancellationToken),
+            { ShippingQuery: { } shippingQuery } => BotShippingHandlerAsync(shippingQuery, cancellationToken),
             _                                              => UnknownUpdateHandlerAsync(update, cancellationToken)
         };
 
         await handler;
     }
 
+    private async Task BotShippingHandlerAsync(ShippingQuery shippingQuery, CancellationToken cancellationToken)
+    {
+        // await _botClient.AnswerShippingQueryAsync(shippingQuery.Id, "errorMessage1");
+        await _botClient.AnswerShippingQueryAsync(shippingQuery.Id, new []{ 
+            new ShippingOption
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = "Abc1",
+            Prices = new []
+            {
+                new LabeledPrice("Abc1_price1", 5*100),
+                new LabeledPrice("Abc1_price2", 7*100)
+            }
+        },
+            new ShippingOption
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = "Abc2",
+                Prices = new []
+                {
+                    new LabeledPrice("Abc1_price1", 2*100),
+                }
+            }
+        });
+    }
+    
     private Task<Message> SendInlineKeyboard(ITelegramBotClient arg1, Message arg2, CancellationToken arg3)
     {
         throw new NotImplementedException();
@@ -120,7 +155,7 @@ public class UpdateHandler : IUpdateHandler
 #pragma warning restore RCS1163 // Unused parameter.
 #pragma warning restore IDE0060 // Remove unused parameter
     {
-        _logger.LogInformation("Unknown update type: {UpdateType}", update.Type);
+        _logger.LogWarning("Unknown update type: {UpdateType}", update.Type);
         return Task.CompletedTask;
     }
 
@@ -138,4 +173,10 @@ public class UpdateHandler : IUpdateHandler
         if (exception is RequestException)
             await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken);
     }
-}
+    
+    private async Task BotPreCheckoutHandlerAsync(PreCheckoutQuery preCheckoutQuery, CancellationToken cancellationToken)
+    {
+        // await _botClient.AnswerPreCheckoutQueryAsync(preCheckoutQuery.Id, "Error-NoPayment", cancellationToken: cancellationToken);
+        await _paymentsService.PreCheckoutHandlerAsync(preCheckoutQuery, cancellationToken);
+    }
+}   

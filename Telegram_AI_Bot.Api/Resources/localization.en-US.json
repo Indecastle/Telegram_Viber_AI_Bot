@@ -45,5 +45,6 @@
   "DeletedContext": "Context has been deleted",
   "GetContact": "Owner's contact",
   "MyId": "My ID",
-  "Wait": "Please wait..."
+  "Wait": "Please wait...",
+  "PaymentDescription": "You will buy tokens: {0}"
 }

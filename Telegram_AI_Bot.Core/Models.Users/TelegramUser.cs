@@ -199,4 +199,9 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         Name = new Name(internalUser.FirstName, internalUser.LastName);
         Username = internalUser.Username;
     }
+
+    public void IncreaseBalance(long amount)
+    {
+        Balance += amount;
+    }
 }

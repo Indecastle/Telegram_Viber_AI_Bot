@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.Payments;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
@@ -47,6 +48,12 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         TelegramMessageHelper.SetCulture(user.Language);
         
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
+        if (message is {Type: MessageType.SuccessfulPayment})
+        {
+            await SuccessfulPaymentHandler(message, user, cancellationToken);
+            return;
+        }
+        
         if (message.Text is not { } messageText)
             return;
 
@@ -59,6 +66,11 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         await action;
 
         await _unitOfWork.CommitAsync();
+    }
+
+    private async Task SuccessfulPaymentHandler(Message message, TelegramUser user, CancellationToken cancellationToken)
+    {
+        
     }
 
     private async Task CommandHandler(Message message, TelegramUser user, CancellationToken cancellationToken)
@@ -112,6 +124,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: _localizer.GetString("Balance", user.Balance),
+            replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }

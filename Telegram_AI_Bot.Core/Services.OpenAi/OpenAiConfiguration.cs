@@ -13,4 +13,11 @@ public class OpenAiConfiguration
     public int? ImageSmallTokens { get; set; } = null;
     public int? ImageMediumTokens { get; set; } = null;
     public int? ImageLargeTokens { get; set; } = null;
+
+    public long CalculateTokens(long cents) // 1 (dollar) * 100
+    {
+        var k = 1 / TextPrice * 1000 / FactorText;
+        long amount = cents / 100 * (long)k!;
+        return amount;
+    }
 }
