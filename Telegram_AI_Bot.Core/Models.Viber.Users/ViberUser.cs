@@ -19,6 +19,7 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public string Name { get; protected set; }
     public string Language { get; protected set; }
     public long Balance { get; set; }
+    public ChatModel ChatModel => ChatModel.Gpt4;
     public SelectedMode SelectedMode { get; set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
@@ -48,6 +49,10 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public void SetBalance(int amount)
     {
         Balance = amount;
+    }
+
+    public void SetChatModel(ChatModel model)
+    {
     }
 
     public void SetLanguage(string lang)
@@ -136,9 +141,15 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         }
     }
 
-    public void ReduceChatTokens(int tokens)
+    public void ReduceChatTokens(int tokens, OpenAiConfiguration openAiOptions)
     {
-        Balance -= tokens;
+        int factor = ChatModel switch
+        {
+            var x when x == ChatModel.Gpt4 => openAiOptions.FactorTextGpt4!.Value,
+            _ => 1
+        };
+        
+        Balance -= tokens * factor;
         Balance = Balance < 0 ? 0 : Balance;
     }
 

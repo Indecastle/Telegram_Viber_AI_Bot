@@ -19,8 +19,9 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public long UserId { get; protected set; }
     public Name Name { get; protected set; }
     public string? Username { get; protected set; }
-    public string Language { get; set; }
-    public long Balance { get; set; }
+    public string Language { get; protected set; }
+    public long Balance { get; protected set; }
+    public ChatModel? ChatModel { get; protected set; }
     public bool EnabledContext { get; protected set; }
     public bool EnabledStreamingChat { get; protected set; }
     public SelectedMode SelectedMode { get; set; }
@@ -52,6 +53,11 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
             return;
 
         Role = role;
+    }
+    
+    public void SetChatModel(ChatModel model)
+    {
+        ChatModel = model;
     }
     
     public void SetLanguage(string lang)
@@ -114,6 +120,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
             EnabledContext = enabledContext,
             EnabledStreamingChat = enabledStreamingChat,
             StartAt = startAt,
+            ChatModel = null,
         };
         return user;
     }
@@ -150,9 +157,15 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         }
     }
 
-    public void ReduceChatTokens(int tokens)
+    public void ReduceChatTokens(int tokens, OpenAiConfiguration openAiOptions)
     {
-        Balance -= tokens;
+        int factor = ChatModel switch
+        {
+            var x when x == ChatModel.Gpt4 => openAiOptions.FactorTextGpt4!.Value,
+            _ => 1
+        };
+        
+        Balance -= tokens * factor;
         Balance = Balance < 0 ? 0 : Balance;
     }
 

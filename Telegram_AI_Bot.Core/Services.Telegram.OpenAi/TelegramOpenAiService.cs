@@ -11,13 +11,14 @@ using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram_AI_Bot.Core.Telegram;
 using Telegram_AI_Bot.Core.Viber;
 
 namespace Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
 
 public interface ITelegramOpenAiService
 {
-    Task Handler(Message? message, CancellationToken cancellationToken);
+    Task Handler(Message? message, TelegramUser user, CancellationToken cancellationToken);
 }
 
 public class TelegramOpenAiService : ITelegramOpenAiService
@@ -44,15 +45,14 @@ public class TelegramOpenAiService : ITelegramOpenAiService
         _localizer = localizer;
     }
 
-    public async Task Handler(Message? message, CancellationToken cancellationToken)
+    public async Task Handler(Message? message, TelegramUser user, CancellationToken cancellationToken)
     {
         await _botClient.SendChatActionAsync(
             chatId: message.Chat.Id,
             chatAction: ChatAction.Typing,
             cancellationToken: cancellationToken);
-
-        var storedUser = await _userRepository.ByUserIdAsync(message.From.Id);
-        if (!storedUser.IsPositiveBalance())
+        
+        if (!user.IsPositiveBalance())
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
@@ -62,23 +62,33 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             return;
         }
 
-        if (storedUser.SelectedMode == SelectedMode.Chat)
+        if (string.IsNullOrWhiteSpace(user.ChatModel))
         {
-            if (storedUser.IsEnabledStreamingChat())
+            await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: _localizer.GetString("ChooseChatModelBegin"),
+                replyMarkup: TelegramInlineMenus.SetChatModelBegin(_localizer, user),
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        if (user.SelectedMode == SelectedMode.Chat)
+        {
+            if (user.IsEnabledStreamingChat())
                 try
                 {
-                    await SendGradually(message, storedUser, cancellationToken);
+                    await SendGradually(message, user, cancellationToken);
                 }
                 finally
                 {
                     await _unitOfWork.CommitAsync();
                 }
             else
-                await SendImmediately(message, storedUser, cancellationToken);
+                await SendImmediately(message, user, cancellationToken);
         }
         else
         {
-            var url = await _openAiService.ImageHandler(message.Text, storedUser);
+            var url = await _openAiService.ImageHandler(message.Text, user);
 
             await _botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,

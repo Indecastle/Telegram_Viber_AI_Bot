@@ -53,7 +53,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         var action = messageText switch
         {
             var x when x.StartsWith("/") => CommandHandler(message, user, cancellationToken),
-            _ => _telegramOpenAiService.Handler(message, cancellationToken)
+            _ => _telegramOpenAiService.Handler(message, user, cancellationToken)
         };
         
         await action;

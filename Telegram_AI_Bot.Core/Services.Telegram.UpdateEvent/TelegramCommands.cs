@@ -8,11 +8,12 @@ public class TelegramCommands
         public const string Balance = "--balance";
         public const string Settings = "--settings";
         public const string Settings_SetLanguage = "--settings_set_language";
+        public const string Settings_SetChatModel = "--chat_model";
         public const string Help = "--help";
 
         public static readonly string[] All =
         {
-            MainMenu, Balance, Settings, Settings_SetLanguage, Help
+            MainMenu, Balance, Settings, Settings_SetLanguage, Settings_SetChatModel, Help
         };
     }
     

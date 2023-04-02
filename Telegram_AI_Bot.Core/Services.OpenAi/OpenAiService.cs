@@ -20,7 +20,7 @@ public interface IOpenAiService
 public class OpenAiService : IOpenAiService
 {
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
-    private static readonly ChatPrompt[] TemplateSystemChatPrompt = { new("system", "You are a helpful assistant.") };
+    private static readonly ChatPrompt[] TemplateSystemChatPrompt = { new("system", "You are a helpful assistant.\nYou are Chat GPT-4 version") };
     private static readonly TikToken _tikToken = TikToken.EncodingForModel("gpt-3.5-turbo");
 
     private readonly OpenAiConfiguration _openAiOptions;
@@ -46,7 +46,7 @@ public class OpenAiService : IOpenAiService
         
         // string jsonString = JsonConvert.SerializeObject(chatRequest.Messages);
         UserContextHandler(user, requestText, resultText);
-        user.ReduceChatTokens(result.Usage.TotalTokens);
+        user.ReduceChatTokens(result.Usage.TotalTokens, _openAiOptions);
 
         return resultText;
     }
@@ -74,7 +74,7 @@ public class OpenAiService : IOpenAiService
             int tokens2 = _tikToken.Encode(strBuilder.ToString()).Count;
 
             UserContextHandler(user, requestText, strBuilder.ToString());
-            user.ReduceChatTokens(tokens1 + tokens2 + 1);
+            user.ReduceChatTokens(tokens1 + tokens2 + 1, _openAiOptions);
         }
     }
 
@@ -92,7 +92,7 @@ public class OpenAiService : IOpenAiService
 
         resultDialog = resultDialog.Concat(new[] { newPromptMessage });
 
-        return new ChatRequest(resultDialog, model: Model.GPT3_5_Turbo);
+        return new ChatRequest(resultDialog, model: user.ChatModel!.Value);
     }
 
     public async Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small)

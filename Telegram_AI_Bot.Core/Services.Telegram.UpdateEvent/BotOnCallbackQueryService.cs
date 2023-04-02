@@ -44,7 +44,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     {
         if (callbackQuery?.Data == null)
             return;
-        
+
         var user = await _userRepository.GetOrCreateIfNotExistsAsync(callbackQuery.From);
         TelegramMessageHelper.SetCulture(user.Language);
 
@@ -74,6 +74,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             TelegramCommands.Keyboard.MainMenu => KeyboardMainMenu(callbackQuery, args, cancellationToken),
             TelegramCommands.Keyboard.Balance => KeyboardBalance(callbackQuery, args, user, cancellationToken),
             TelegramCommands.Keyboard.Settings => KeyboardSettings(callbackQuery, args, user, cancellationToken),
+            TelegramCommands.Keyboard.Settings_SetChatModel => KeyboardSettingsChatModel(callbackQuery, args, user,
+                cancellationToken),
             TelegramCommands.Keyboard.Settings_SetLanguage => KeyboardLanguage(callbackQuery, args, user,
                 cancellationToken),
             TelegramCommands.Keyboard.Help => KeyboardHelp(callbackQuery, args, cancellationToken),
@@ -82,10 +84,39 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         await action;
     }
 
+    private async Task KeyboardSettingsChatModel(CallbackQuery callbackQuery, string[] args, TelegramUser user,
+        CancellationToken cancellationToken)
+    {
+        if (args.FirstOrDefault() is { } arg && ChatModel.All.Contains(arg))
+        {
+            user.SetChatModel(arg!);
+            await _unitOfWork.CommitAsync();
+
+            if (args.Length == 2 && args[1] == "Begin")
+            {
+                await _botClient.EditMessageTextAsync(
+                    chatId: callbackQuery.Message!.Chat.Id,
+                    messageId: callbackQuery.Message.MessageId,
+                    text: _localizer.GetString("YouChoseChatModel", user.ChatModel!.Value),
+                    parseMode: ParseMode.Html,
+                    cancellationToken: cancellationToken);
+                return;
+            }
+        }
+
+        await _botClient.EditMessageTextAsync(
+            chatId: callbackQuery.Message!.Chat.Id,
+            messageId: callbackQuery.Message.MessageId,
+            text: _localizer.GetString("ChooseChatModel"),
+            replyMarkup: TelegramInlineMenus.SetChatModel(_localizer, user),
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
+    }
+
     private async Task KeyboardMainMenu(CallbackQuery callbackQuery, string[] args, CancellationToken cancellationToken)
     {
         await _botClient.EditMessageTextAsync(
-            chatId: callbackQuery.Message.Chat.Id,
+            chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
             text: _localizer.GetString("MainMenu"),
             replyMarkup: TelegramInlineMenus.MainMenu(_localizer),
@@ -93,24 +124,26 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             cancellationToken: cancellationToken);
     }
 
-    private async Task KeyboardBalance(CallbackQuery callbackQuery, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    private async Task KeyboardBalance(CallbackQuery callbackQuery, string[] args, TelegramUser user,
+        CancellationToken cancellationToken)
     {
         await _botClient.EditMessageTextAsync(
-            chatId: callbackQuery.Message.Chat.Id,
+            chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
             text: _localizer.GetString("Balance", user.Balance),
             replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer),
             cancellationToken: cancellationToken);
     }
 
-    private async Task KeyboardSettings(CallbackQuery callbackQuery, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    private async Task KeyboardSettings(CallbackQuery callbackQuery, string[] args, TelegramUser user,
+        CancellationToken cancellationToken)
     {
         switch (args.FirstOrDefault())
         {
-            case "SwitchMode": 
+            case "SwitchMode":
                 user.SwitchMode();
                 break;
-            case "SwitchContext": 
+            case "SwitchContext":
                 user.SwitchEnablingContext();
                 break;
             case "SwitchStreamingChat":
@@ -126,13 +159,13 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         }
 
         await _botClient.EditMessageTextAsync(
-            chatId: callbackQuery.Message.Chat.Id,
+            chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
             text: TelegramInlineMenus.GetSettingsText(_localizer, user),
             replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
-        
+
         await _unitOfWork.CommitAsync();
     }
 
@@ -157,7 +190,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             text: _localizer.GetString("Language.Title"),
             replyMarkup: TelegramInlineMenus.LanguageMenu(_localizer),
             cancellationToken: cancellationToken);
-        
+
         await _unitOfWork.CommitAsync();
     }
 

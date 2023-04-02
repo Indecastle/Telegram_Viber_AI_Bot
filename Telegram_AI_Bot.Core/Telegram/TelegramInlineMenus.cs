@@ -31,11 +31,12 @@ public static class TelegramInlineMenus
         return inlineKeyboard;
     }
 
-    public static InlineKeyboardButton[] BackPrev(string text, string callbackData) =>
-        new[]
-        {
-            InlineKeyboardButton.WithCallbackData(text, callbackData),
-        };
+    public static InlineKeyboardButton[] BackPrev(string text, string callbackData, bool isVisible = true) =>
+        isVisible ? new[]
+            {
+                InlineKeyboardButton.WithCallbackData(text, callbackData),
+            }
+            : Array.Empty<InlineKeyboardButton>();
 
     public static InlineKeyboardMarkup HelpMenu(IJsonStringLocalizer localizer) =>
         new(
@@ -61,6 +62,13 @@ public static class TelegramInlineMenus
                         TelegramCommands.Keyboard.Settings_SetLanguage),
                     InlineKeyboardButton.WithCallbackData(localizer.GetString("SwitchMode"),
                         TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "SwitchMode")),
+                },
+                new[]
+                {
+                    user.SelectedMode == SelectedMode.Chat
+                        ? InlineKeyboardButton.WithCallbackData(localizer.GetString("ChangeChatModel"),
+                            TelegramCommands.Keyboard.Settings_SetChatModel)
+                        : null,
                 },
                 new[]
                 {
@@ -95,7 +103,7 @@ public static class TelegramInlineMenus
 
         if (user.SelectedMode == SelectedMode.Chat)
         {
-            str.AppendLine(l.GetString("SettingsText.ChatModel") + "chat-3.5-turbo");
+            str.AppendLine(l.GetString("SettingsText.ChatModel") + user.ChatModel);
             // str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
             str.AppendLine(l.GetStringYesNo("SettingsText.EnabledContext", user.EnabledContext));
             if (user.EnabledContext)
@@ -123,6 +131,42 @@ public static class TelegramInlineMenus
                         TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SetLanguage, "ru-RU")),
                     InlineKeyboardButton.WithCallbackData(localizer.GetString("Language.English"),
                         TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SetLanguage, "en-US")),
+                },
+                BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Settings),
+            });
+
+    private static string GetLocalizedChatModelItem(IJsonStringLocalizer localizer, ChatModel model, TelegramUser user)
+    {
+        return localizer.GetStringYesNo($"ChatModels.{model.Value}", user.ChatModel == model, noIsVisible: false);
+    }
+
+    public static InlineKeyboardMarkup SetChatModelBegin(IJsonStringLocalizer localizer, TelegramUser user) =>
+        new(
+            new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(GetLocalizedChatModelItem(localizer, ChatModel.Gpt35, user),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SetChatModel,
+                            ChatModel.Gpt35.Value, "Begin")),
+                    InlineKeyboardButton.WithCallbackData(GetLocalizedChatModelItem(localizer, ChatModel.Gpt4, user),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SetChatModel,
+                            ChatModel.Gpt4.Value, "Begin")),
+                },
+            });
+    
+    public static InlineKeyboardMarkup SetChatModel(IJsonStringLocalizer localizer, TelegramUser user) =>
+        new(
+            new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(GetLocalizedChatModelItem(localizer, ChatModel.Gpt35, user),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SetChatModel,
+                            ChatModel.Gpt35.Value)),
+                    InlineKeyboardButton.WithCallbackData(GetLocalizedChatModelItem(localizer, ChatModel.Gpt4, user),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SetChatModel,
+                            ChatModel.Gpt4.Value)),
                 },
                 BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Settings),
             });

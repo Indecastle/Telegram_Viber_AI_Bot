@@ -1,4 +1,5 @@
 using MyTemplate.App.Core.Models.Types;
+using Telegram_AI_Bot.Core.Models.Types;
 
 namespace Telegram_AI_Bot.Core.Models;
 

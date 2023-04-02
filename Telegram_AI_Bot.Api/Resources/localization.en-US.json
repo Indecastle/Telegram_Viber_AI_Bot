@@ -18,14 +18,22 @@
   },
   "Help": "Help",
   "ChangeLanguage": "Change language",
+  "ChangeChatModel": "Change chat model",
   "Language": {
     "Title": "Language change",
     "Russian": "Русский",
     "English": "English"
   },
+  "ChooseChatModelBegin": "Choose chat model.\nWarning: GPT4 Charges 30 times more tokens than GPT3.5",
+  "ChooseChatModel": "Choose chat model.\nWarning: GPT4 Charges 30 times more tokens than GPT3.5",
+  "YouChoseChatModel": "You have selected a model: <i><b>{0}</b></i>",
+  "ChatModels": {
+    "gpt-3.5-turbo": "GPT-3.5-turbo",
+    "gpt-4": "GPT-4"
+  },
   "HelpText": "If you have any questions or difficulties while using the bot, we are here to help you. You can contact us at any time by sending a message in this chat and we will try to answer your questions as soon as possible. You can also use different commands to control the bot and get more accurate answers to your requests. Thank you for choosing our bot!",
-  "BackToMainMenu": "Back to main menu",
-  "Back": "Go back",
+  "BackToMainMenu": "\uD83D\uDD19 Back to main menu",
+  "Back": "\uD83D\uDD19 Go back",
   "SwitchMode": "Change mode",
   "SelectedMode_Chat": "сhat",
   "SelectedMode_Image": "\uD83D\uDD25image\uD83D\uDD25",
