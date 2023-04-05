@@ -88,7 +88,7 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         int balance,
         bool enabledContext)
     {
-        return await NewAsync(userId, userName, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER, enabledContext, false, DateTimeOffset.UtcNow);
+        return await NewAsync(userId, userName, name, language, balance,  SelectedMode.Chat, Role.CLIENT_USER, enabledContext, true, DateTimeOffset.UtcNow);
     }
 
     private static async Task<TelegramUser> NewAsync(
@@ -159,13 +159,13 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
 
     public void ReduceChatTokens(int tokens, OpenAiConfiguration openAiOptions)
     {
-        int factor = ChatModel switch
-        {
-            var x when x == ChatModel.Gpt4 => openAiOptions.FactorTextGpt4!.Value,
-            _ => 1
-        };
+        // int factor = ChatModel switch
+        // {
+        //     var x when x == ChatModel.Gpt4 => openAiOptions.FactorTextGpt4!.Value,
+        //     _ => 1
+        // };
         
-        Balance -= tokens * factor;
+        Balance -= tokens;
         Balance = Balance < 0 ? 0 : Balance;
     }
 

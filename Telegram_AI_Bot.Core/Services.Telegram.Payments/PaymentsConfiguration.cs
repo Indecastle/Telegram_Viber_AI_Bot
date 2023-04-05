@@ -6,4 +6,7 @@ public class PaymentsConfiguration
 
     public int[]? Choices { get; set; } = null;
     public string? StripeProviderToken { get; set; } = null;
+    public string? TonProviderToken { get; set; } = null;
+    public (decimal Rub, long Token)[] TonPriceTuples => CryptoPrices.Select(x => (x[0], (long)x[1])).ToArray();
+    public decimal[][] CryptoPrices { get; set; } = null;
 }

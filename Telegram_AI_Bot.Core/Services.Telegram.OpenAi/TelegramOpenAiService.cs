@@ -104,7 +104,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             text: _localizer.GetString("Wait"),
             // replyMarkup: new ReplyKeyboardRemove(),
             cancellationToken: cancellationToken);
-            
+        
         var textResult = await _openAiService.ChatHandler(message.Text, storedUser);
 
         if (string.IsNullOrEmpty(textResult))
@@ -150,6 +150,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     {
         Message? waitMessage = null;
         var strBuilder = new StringBuilder();
+        var strBuilderBuff = new StringBuilder();
         Task delaier = Task.Delay(0);
         
         await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser))
@@ -163,6 +164,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             }
             
             strBuilder.Append(result.FirstChoice);
+            strBuilderBuff.Append(result.FirstChoice);
             
             if (string.IsNullOrWhiteSpace(result.FirstChoice))
                 continue;
@@ -171,6 +173,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             {
                 if (delaier.IsCompleted)
                 {
+                    strBuilderBuff.Clear();
                     delaier = Task.Delay(_streamDelayMilliseconds);
                     await _botClient.EditMessageTextAsync(
                         chatId: message.Chat.Id,
@@ -182,7 +185,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             else
             {
                 strBuilder.Clear();
-                strBuilder.Append(result.FirstChoice);
+                strBuilder.Append(strBuilderBuff);
                 waitMessage = await _botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: result.FirstChoice,

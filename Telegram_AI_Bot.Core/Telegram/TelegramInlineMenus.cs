@@ -1,10 +1,12 @@
 using System.Text;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
+using CryptoPay.Types;
 using Microsoft.Extensions.Localization;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
+using Telegram_AI_Bot.Core.Services.Telegram.Payments;
 using Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 
 namespace Telegram_AI_Bot.Core.Telegram;
@@ -51,7 +53,7 @@ public static class TelegramInlineMenus
             {
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData(localizer.GetString("Payments"),
+                    InlineKeyboardButton.WithCallbackData(localizer.GetString("TonCoin.BuyTokens"),
                         TelegramCommands.Keyboard.Payments),
                 },
                 BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu),
@@ -108,7 +110,7 @@ public static class TelegramInlineMenus
 
         if (user.SelectedMode == SelectedMode.Chat)
         {
-            str.AppendLine(l.GetString("SettingsText.ChatModel") + "chat-3.5-turbo");
+            str.AppendLine(l.GetString("SettingsText.ChatModel") + user.ChatModel);
             // str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
             str.AppendLine(l.GetStringYesNo("SettingsText.EnabledContext", user.EnabledContext));
             if (user.EnabledContext)
@@ -176,31 +178,109 @@ public static class TelegramInlineMenus
                 BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Settings),
             });
 
-    public static InlineKeyboardMarkup Payments(IJsonStringLocalizer localizer) =>
-        new(
+    public static InlineKeyboardMarkup Payments(IJsonStringLocalizer localizer, TelegramUser user, PaymentsConfiguration paymentsOptions, IExchangeRates rates, long index)
+    {
+        var amount = paymentsOptions.TonPriceTuples[index].Rub;
+        var ton = rates.GetPrice(Assets.RUB, Assets.TON, amount);
+        var usdt = rates.GetPrice(Assets.RUB, Assets.USDT, amount);
+        var usdc = rates.GetPrice(Assets.RUB, Assets.USDC, amount);
+        var busd = rates.GetPrice(Assets.RUB, Assets.BUSD, amount);
+        var eth = rates.GetPrice(Assets.RUB, Assets.ETH, amount);
+        var bnb = rates.GetPrice(Assets.RUB, Assets.BNB, amount);
+        var btc = rates.GetPrice(Assets.RUB, Assets.BTC, amount);
+        
+        return new(
             new[]
             {
+                // new[]
+                // {
+                //     InlineKeyboardButton.WithCallbackData("Stripe",
+                //         TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe")),
+                // },
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("Stripe",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe")),
+                    InlineKeyboardButton.WithCallbackData($"TON ({rates.Round(ton.Value, 2)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.TON.ToString(), index.ToString())),
+                    InlineKeyboardButton.WithCallbackData($"USDT ({rates.Round(usdt.Value, 2)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.USDT.ToString(), index.ToString())),
                 },
-                BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Balance),
-            });
-
-    public static InlineKeyboardMarkup PaymentChoices(IJsonStringLocalizer localizer, string provider) =>
-        new(
-            new[]
-            {
                 new[]
                 {
-                    InlineKeyboardButton.WithCallbackData("$2",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe", "200")),
-                    InlineKeyboardButton.WithCallbackData("$5",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe", "500")),
-                    InlineKeyboardButton.WithCallbackData("$10",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, "Stripe", "1000")),
+                    InlineKeyboardButton.WithCallbackData($"USDC ({rates.Round(usdc.Value, 2)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.USDC.ToString(), index.ToString())),
+                    InlineKeyboardButton.WithCallbackData($"BUSD ({rates.Round(busd.Value, 2)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.BUSD.ToString(), index.ToString())),
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData($"ETH ({rates.Round(eth.Value, 5)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.ETH.ToString(), index.ToString())),
+                    InlineKeyboardButton.WithCallbackData($"BNB ({rates.Round(bnb.Value, 5)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.BNB.ToString(), index.ToString())),
+                },
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData($"BTC ({rates.Round(btc.Value, 6)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.BTC.ToString(), index.ToString())),
                 },
                 BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Payments),
             });
+    }
+    
+    public static InlineKeyboardMarkup PaymentPressToPay(IJsonStringLocalizer localizer, string payUrl) =>
+        new(
+            new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithUrl(localizer.GetString("TonCoin.PressToPayButton"), payUrl),
+                },
+            });
+
+    public static InlineKeyboardMarkup PaymentChoices(IJsonStringLocalizer localizer, PaymentsConfiguration paymentsOptions)
+    {
+        return "Ton" switch
+        {
+            // "Stripe" => new(
+            //     new[]
+            //     {
+            //         new[]
+            //         {
+            //             InlineKeyboardButton.WithCallbackData("$2",
+            //                 TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, provider, "200")),
+            //             InlineKeyboardButton.WithCallbackData("$5",
+            //                 TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, provider, "500")),
+            //             InlineKeyboardButton.WithCallbackData("$10",
+            //                 TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, provider, "1000")),
+            //         },
+            //         BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Payments),
+            //     }),
+            "Ton" => new(
+                paymentsOptions.TonPriceTuples
+                    .Select((x, i) => new[]
+                    {
+                        InlineKeyboardButton.WithCallbackData(localizer.GetString("TonCoin.ButtonItem", x.Rub),
+                            TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, i.ToString()))
+                    })
+                    .Concat(new[] { BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Balance) })
+                    .ToArray()),
+        };
+    }
+    
+    public static string GetPaymentsText(IJsonStringLocalizer l, TelegramUser user, PaymentsConfiguration paymentsOptions)
+    {
+        var str = new StringBuilder();
+
+        // TODO: So far, only TON
+        // if (provider != "Ton")
+        //     return str.ToString();
+
+        str.AppendLine(l.GetString("TonCoin.Title"));
+        foreach (var (rub, token) in paymentsOptions.TonPriceTuples)
+        {
+            str.AppendLine(l.GetString("TonCoin.Item", rub, token));
+        }
+        
+        return str.ToString();
+    }
 }

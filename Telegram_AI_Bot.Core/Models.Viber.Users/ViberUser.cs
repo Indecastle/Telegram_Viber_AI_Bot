@@ -143,13 +143,13 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
 
     public void ReduceChatTokens(int tokens, OpenAiConfiguration openAiOptions)
     {
-        int factor = ChatModel switch
-        {
-            var x when x == ChatModel.Gpt4 => openAiOptions.FactorTextGpt4!.Value,
-            _ => 1
-        };
+        // int factor = ChatModel switch
+        // {
+        //     var x when x == ChatModel.Gpt4 => openAiOptions.FactorTextGpt4!.Value,
+        //     _ => 1
+        // };
         
-        Balance -= tokens * factor;
+        Balance -= tokens;
         Balance = Balance < 0 ? 0 : Balance;
     }
 

@@ -1,6 +1,7 @@
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -28,6 +29,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IJsonStringLocalizer _localizer;
     private readonly ITelegramPaymentsService _paymentsService;
+    private readonly PaymentsConfiguration _paymentsOptions;
+    private readonly IExchangeRates _rates;
 
     public BotOnCallbackQueryService(
         ITelegramBotClient botClient,
@@ -35,7 +38,9 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
         IJsonStringLocalizer localizer,
-        ITelegramPaymentsService paymentsService)
+        ITelegramPaymentsService paymentsService,
+        IOptions<PaymentsConfiguration> paymentsOptions,
+        IExchangeRates rates)
     {
         _botClient = botClient;
         _logger = logger;
@@ -43,6 +48,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         _unitOfWork = unitOfWork;
         _localizer = localizer;
         _paymentsService = paymentsService;
+        _rates = rates;
+        _paymentsOptions = paymentsOptions.Value;
     }
 
     public async Task Handler(CallbackQuery? callbackQuery, CancellationToken cancellationToken)
@@ -94,17 +101,20 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     {
         if (args.Length == 1)
         {
+            if (!_rates.Rate_Ton_Rub.HasValue)
+                return;
+
             await _botClient.EditMessageTextAsync(
                 chatId: callbackQuery.Message!.Chat.Id,
                 messageId: callbackQuery.Message.MessageId,
-                text: _localizer.GetString("Payments"),
-                replyMarkup: TelegramInlineMenus.PaymentChoices(_localizer, args[0]),
+                text: _localizer.GetString("TonCoin.ChooseCurrency"),
+                replyMarkup: TelegramInlineMenus.Payments(_localizer, user, _paymentsOptions, _rates, int.Parse(args[0])),
                 parseMode: ParseMode.Html,
                 cancellationToken: cancellationToken);
             return;
         }
         
-        if (args.Length == 2)
+        if (args.Length == 3)
         {
             await _paymentsService.Handler(callbackQuery.From.Id, callbackQuery.Message!.MessageId, args, user,
                 cancellationToken);
@@ -114,8 +124,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         await _botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: _localizer.GetString("Payments"),
-            replyMarkup: TelegramInlineMenus.Payments(_localizer),
+            text: TelegramInlineMenus.GetPaymentsText(_localizer, user, _paymentsOptions),
+            replyMarkup: TelegramInlineMenus.PaymentChoices(_localizer, _paymentsOptions),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }

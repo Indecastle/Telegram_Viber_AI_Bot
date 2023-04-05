@@ -13,6 +13,7 @@ internal class AppDbContext : DbContext
     }
 
     public DbSet<TelegramUser> Users { get; set; } = null!;
+    public DbSet<CryptoTransaction> CryptoTransactions { get; set; } = null!;
     public DbSet<ViberUser> ViberUser { get; set; } = null!;
 
     public async Task SaveChangesAsync()

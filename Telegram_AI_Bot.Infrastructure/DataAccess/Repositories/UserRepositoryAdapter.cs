@@ -88,4 +88,11 @@ internal class UserRepositoryAdapter : IUserRepository
             .Where(x => x.Balance < Constants.LOW_LIMIT_BALANCE)
             .ToArrayAsync();
     }
+
+    public async Task<TelegramUser[]> GetAllByUserId(long[] userIds)
+    {
+        return await _dbContext.Users.AsQueryable()
+            .Where(x => userIds.Contains(x.UserId))
+            .ToArrayAsync();
+    }
 }

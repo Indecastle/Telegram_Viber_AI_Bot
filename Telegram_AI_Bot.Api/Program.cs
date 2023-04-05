@@ -87,6 +87,7 @@ builder.Services
 builder.Services
     .AddDataAccess(builder.Configuration)
     .AddInfrastructureModule(builder.Configuration)
+    .AddTelegramInfrastructureModule(builder.Configuration)
     .AddTelegramCoreModule();
 
 var app = builder.Build();

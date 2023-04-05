@@ -5,6 +5,7 @@ using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Images;
 using OpenAI.Models;
+using Telegram_AI_Bot.Core.Models;
 using TiktokenSharp;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 
@@ -44,9 +45,12 @@ public class OpenAiService : IOpenAiService
         var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest);
         var resultText = result.FirstChoice.Message.ToString().Trim();
         
+        var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
+        var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
+        
         // string jsonString = JsonConvert.SerializeObject(chatRequest.Messages);
         UserContextHandler(user, requestText, resultText);
-        user.ReduceChatTokens(result.Usage.TotalTokens, _openAiOptions);
+        user.ReduceChatTokens(result.Usage.PromptTokens*factorRequest + result.Usage.CompletionTokens*factorResponse, _openAiOptions);
 
         return resultText;
     }
@@ -73,8 +77,11 @@ public class OpenAiService : IOpenAiService
             int tokens1 = _tikToken.Encode(chatRequestJson).Count;
             int tokens2 = _tikToken.Encode(strBuilder.ToString()).Count;
 
+            var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
+            var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
+
             UserContextHandler(user, requestText, strBuilder.ToString());
-            user.ReduceChatTokens(tokens1 + tokens2 + 1, _openAiOptions);
+            user.ReduceChatTokens(tokens1*factorRequest + tokens2*factorResponse + 1, _openAiOptions);
         }
     }
 
