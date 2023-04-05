@@ -1,8 +1,8 @@
 {
   "Welcome": "Welcome to our bot, where you can chat with ChatGPT, one of the most advanced language models available today! I'm ready to answer any of your questions, help solve difficulties or just talk about any topic. Write to me, and let's start our exciting journey into the world of artificial intelligence!",
-  "MainMenu": "Main menu",
+  "MainMenu": "Main Menu\n\nThe value of 1 token = 4 Latin letters or 1 non Latin letter.\n1 picture = 16 000 tokens\n\nA reminder: GTP-4 is 30 times more expensive than GTP-3.",
   "BalanceTitle": "Balance",
-  "Balance": "Balance:\n{0} tokens left",
+  "Balance": "Tokens left: {0}\nThe cost of 1 token = 4 Latin letters or 1 non-Latin letter.\n1 picture = 16,000 tokens\n\nReminder: GTP-4 is 30 times more expensive than GTP-3.",
   "NoBalance": "Not enough resources.\nContact the owner to top up your balance.",
   "Settings": "Settings",
   "SettingsText": {
@@ -24,6 +24,17 @@
     "Russian": "Русский",
     "English": "English"
   },
+  "TonCoin": {
+    "Title": "Cost of tokens",
+    "ChooseCurrency": "Choose a currency, please",
+    "BuyTokens": "\uD83D\uDCB8 Buy tokens",
+    "Item": "{0} rub = {1} tokens",
+    "ButtonItem": "{0} rub",
+    "PressToPayBody": "An invoice in the amount of {0} {1} has been created.\nNow you need to go to the payment bot at the link below and make the payment",
+    "PressToPayButton": "Go to the payment",
+    "InvoiceDescription": "Buying Tokens",
+    "YouHaveBoughtTokens": "You have bought tokens: {0}"
+  },
   "ChooseChatModelBegin": "Choose chat model.\nWarning: GPT4 Charges 30 times more tokens than GPT3.5",
   "ChooseChatModel": "Choose chat model.\nWarning: GPT4 Charges 30 times more tokens than GPT3.5",
   "YouChoseChatModel": "You have selected a model: <i><b>{0}</b></i>",
@@ -35,7 +46,7 @@
   "BackToMainMenu": "\uD83D\uDD19 Back to main menu",
   "Back": "\uD83D\uDD19 Go back",
   "SwitchMode": "Change mode",
-  "SelectedMode_Chat": "сhat",
+  "SelectedMode_Chat": "сhat-bot",
   "SelectedMode_Image": "\uD83D\uDD25image\uD83D\uDD25",
   "DisableContext": "Disable Context",
   "EnableContext": "Enable Context",

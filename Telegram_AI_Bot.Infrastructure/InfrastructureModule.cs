@@ -7,6 +7,7 @@ using Telegram_AI_Bot.Infrastructure.DataAccess;
 using Telegram_AI_Bot.Infrastructure.DataAccess.Repositories;
 using Telegram_AI_Bot.Infrastructure.DataAccess.Repositories.Viber;
 using Telegram_AI_Bot.Core;
+using Telegram_AI_Bot.Core.Services.Telegram.Payments;
 using Telegram_AI_Bot.Infrastructure.BackGroundHosted;
 
 namespace Telegram_AI_Bot.Infrastructure;
@@ -22,7 +23,10 @@ public static class InfrastructureModule
         configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         
         services.AddSingleton<IDateTimeProvider, DateTimeProviderAdapter>();
+        services.AddSingleton<IExchangeRates, ExchangeRates>();
+        services.AddHostedService<ExchangeRatesService>();
         services.AddHostedService<UpdateBalanceAtNight>();
+        services.AddHostedService<CheckPaidInvoices>();
 
         return services;
     }
@@ -39,7 +43,8 @@ public static class InfrastructureModule
                 .ConfigureWarnings(warnings => warnings.Throw()));
 
         services
-            .AddScoped<IUserRepository, UserRepositoryAdapter>();
+            .AddScoped<IUserRepository, UserRepositoryAdapter>()
+            .AddScoped<ICryptoTransactionRepository, CryptoTransactionRepositoryAdapter>();
 
         return services;
     }

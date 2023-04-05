@@ -5,6 +5,7 @@ public class CommonConfiguration
     public static readonly string Configuration = "Common";
 
     public string SocialBotType { get; set; } = "";
+    public string BotUrl { get; set; } = "";
 }
 
 public static class SocialBots

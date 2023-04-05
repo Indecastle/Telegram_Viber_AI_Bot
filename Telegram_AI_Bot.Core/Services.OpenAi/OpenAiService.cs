@@ -5,6 +5,7 @@ using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Images;
 using OpenAI.Models;
+using Telegram_AI_Bot.Core.Models;
 using TiktokenSharp;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 
@@ -73,8 +74,10 @@ public class OpenAiService : IOpenAiService
             int tokens1 = _tikToken.Encode(chatRequestJson).Count;
             int tokens2 = _tikToken.Encode(strBuilder.ToString()).Count;
 
+            var mulResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
+
             UserContextHandler(user, requestText, strBuilder.ToString());
-            user.ReduceChatTokens(tokens1 + tokens2 + 1, _openAiOptions);
+            user.ReduceChatTokens(tokens1 + tokens2*mulResponse + 1, _openAiOptions);
         }
     }
 
