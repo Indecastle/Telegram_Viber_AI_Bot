@@ -46,8 +46,10 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
     {
         var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
         TelegramMessageHelper.SetCulture(user.Language);
-        
-        _logger.LogInformation("Receive message type: {MessageType}", message.Type);
+
+
+        LogMessage(message, user);
+
         if (message is {Type: MessageType.SuccessfulPayment})
         {
             await SuccessfulPaymentHandler(message, user, cancellationToken);
@@ -66,6 +68,19 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         await action;
 
         await _unitOfWork.CommitAsync();
+    }
+
+    private void LogMessage(Message message, TelegramUser user)
+    {
+        switch (message.Type)
+        {
+            case MessageType.Text:
+                _logger.LogInformation("Receive message from user: {UserName} | with text: {Text}", message.From!.Username ?? message.From.FirstName, message.Text);
+                break;
+            default:
+                _logger.LogInformation("Receive message type: {Type}, from user: {UserName}", message.Type, message.From!.Username ?? message.From.FirstName);
+                break;
+        }
     }
 
     private async Task SuccessfulPaymentHandler(Message message, TelegramUser user, CancellationToken cancellationToken)

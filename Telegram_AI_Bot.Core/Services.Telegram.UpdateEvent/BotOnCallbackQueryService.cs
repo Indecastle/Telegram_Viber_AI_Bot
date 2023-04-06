@@ -60,6 +60,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         var user = await _userRepository.GetOrCreateIfNotExistsAsync(callbackQuery.From);
         TelegramMessageHelper.SetCulture(user.Language);
 
+        LogCallbackQuery(callbackQuery, user);
+
         var action = callbackQuery.Data.Split(' ')[0] switch
         {
             var x when x.StartsWith("--") => KeyboardHandle(callbackQuery, cancellationToken),
@@ -140,6 +142,12 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
 
             if (args.Length == 2 && args[1] == "Begin")
             {
+                await _botClient.AnswerCallbackQueryAsync(
+                    callbackQuery.Id,
+                    _localizer.GetString("YouChoseChatModelAlert", user.ChatModel!.Value),
+                    showAlert: true,
+                    cancellationToken: cancellationToken);
+                
                 await _botClient.EditMessageTextAsync(
                     chatId: callbackQuery.Message!.Chat.Id,
                     messageId: callbackQuery.Message.MessageId,
@@ -250,21 +258,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             cancellationToken: cancellationToken);
     }
 
-    private async Task<Message> Usage(ITelegramBotClient botClient, Message message,
-        CancellationToken cancellationToken)
+    private void LogCallbackQuery(CallbackQuery callbackQuery, TelegramUser user)
     {
-        const string usage = "Usage:\n" +
-                             "/inline_keyboard - send inline keyboard\n" +
-                             "/keyboard    - send custom keyboard\n" +
-                             "/remove      - remove custom keyboard\n" +
-                             "/photo       - send a photo\n" +
-                             "/request     - request location or contact\n" +
-                             "/inline_mode - send keyboard with Inline Query";
-
-        return await botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: usage,
-            replyMarkup: new ReplyKeyboardRemove(),
-            cancellationToken: cancellationToken);
+        _logger.LogInformation("Receive callback from user: {UserName} | with data: {Data}", user.Username ?? user.Name.FullName(), callbackQuery.Data);
     }
 }
