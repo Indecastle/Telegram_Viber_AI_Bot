@@ -204,4 +204,20 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     {
         Balance += amount;
     }
+
+    public bool ReduceContextIfNeed(string messageText)
+    {
+        if (ChatModel != ChatModel.Gpt35)
+            return false;
+        
+        var reduced = false;
+        while (_messages.Aggregate(0, (sum, next) => next.Text.Length + sum) + messageText.Length > 4096)
+        {
+            _messages.RemoveAt(0); 
+            _messages.RemoveAt(0); 
+            reduced = true;
+        }
+
+        return reduced;
+    }
 }

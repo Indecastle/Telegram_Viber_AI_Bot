@@ -47,7 +47,7 @@ public static class TelegramInlineMenus
                 BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu),
             });
 
-    public static InlineKeyboardMarkup BalanceMenu(IJsonStringLocalizer localizer) =>
+    public static InlineKeyboardMarkup BalanceMenu(IJsonStringLocalizer localizer, bool showBackButton = true) =>
         new(
             new[]
             {
@@ -56,7 +56,7 @@ public static class TelegramInlineMenus
                     InlineKeyboardButton.WithCallbackData(localizer.GetString("TonCoin.BuyTokens"),
                         TelegramCommands.Keyboard.Payments),
                 },
-                BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu),
+                BackPrev(localizer.GetString("BackToMainMenu"), TelegramCommands.Keyboard.MainMenu, showBackButton),
             });
 
     public static InlineKeyboardMarkup SettingsMenu(IJsonStringLocalizer localizer, TelegramUser user) =>

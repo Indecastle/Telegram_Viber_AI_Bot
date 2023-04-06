@@ -29,7 +29,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     private readonly IOpenAiService _openAiService;
     private readonly IJsonStringLocalizer _localizer;
 
-    private static readonly int _streamDelayMilliseconds = 2000;
+    private static readonly int _streamDelayMilliseconds = 3000;
 
     public TelegramOpenAiService(
         ITelegramBotClient botClient,
@@ -52,16 +52,6 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             chatAction: ChatAction.Typing,
             cancellationToken: cancellationToken);
         
-        if (!user.IsPositiveBalance())
-        {
-            await _botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: _localizer.GetString("NoBalance"),
-                // replyMarkup: new ReplyKeyboardRemove(),
-                cancellationToken: cancellationToken);
-            return;
-        }
-
         if (string.IsNullOrWhiteSpace(user.ChatModel))
         {
             await _botClient.SendTextMessageAsync(
@@ -70,6 +60,24 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 replyMarkup: TelegramInlineMenus.SetChatModelBegin(_localizer, user),
                 cancellationToken: cancellationToken);
             return;
+        }
+        
+        if (!user.IsPositiveBalance())
+        {
+            await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: _localizer.GetString("NoBalance"),
+                replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer, false),
+                cancellationToken: cancellationToken);
+            return;
+        }
+
+        if (user.ReduceContextIfNeed(message.Text))
+        {
+            await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: _localizer.GetString("ReducedContext"),
+                cancellationToken: cancellationToken);
         }
 
         if (user.SelectedMode == SelectedMode.Chat)

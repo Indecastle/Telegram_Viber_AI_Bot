@@ -47,7 +47,7 @@ public static class TelegramMessageHelper
 
     public static string GetStringYesNo(this IJsonStringLocalizer localizer, string name, bool value, bool noIsVisible = true)
     {
-        var noValue = noIsVisible ? "❌" : "";
-        return localizer.GetString(name) + (value ? "✅" : noValue);
+        var noValue = noIsVisible ? " ❌" : "";
+        return localizer.GetString(name) + (value ? " ✅" : noValue);
     }
 }

@@ -31,7 +31,13 @@ internal class UserRepositoryAdapter : IUserRepository
         {
             var lang = TelegramMessageHelper.SetDefaultCulture(internalUser.LanguageCode);
             var entryEntity = await _dbContext.Users.AddAsync(
-                await TelegramUser.NewClientAsync(internalUser.Id, internalUser.Username, new Name(internalUser.FirstName, internalUser.LastName), lang, Constants.FREE_START_BALANCE, true));
+                await TelegramUser.NewClientAsync(
+                    internalUser.Id,
+                    internalUser.Username,
+                    new Name(internalUser.FirstName, internalUser.LastName),
+                    lang,
+                    Constants.FREE_START_BALANCE,
+                    false));
 
             await _dbContext.SaveChangesAsync();
             return entryEntity.Entity;

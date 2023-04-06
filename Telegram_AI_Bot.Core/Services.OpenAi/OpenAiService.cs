@@ -23,6 +23,7 @@ public class OpenAiService : IOpenAiService
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
     private static readonly ChatPrompt[] TemplateSystemChatPrompt = { new("system", "You are a helpful assistant.\nYou are Chat GPT-4 version") };
     private static readonly TikToken _tikToken = TikToken.EncodingForModel("gpt-3.5-turbo");
+    private static readonly string[] _stops = {"user", "assistant"};
 
     private readonly OpenAiConfiguration _openAiOptions;
     private readonly OpenAIClient _api;
@@ -99,7 +100,7 @@ public class OpenAiService : IOpenAiService
 
         resultDialog = resultDialog.Concat(new[] { newPromptMessage });
 
-        return new ChatRequest(resultDialog, model: user.ChatModel!.Value);
+        return new ChatRequest(resultDialog, stops: _stops, model: user.ChatModel!.Value);
     }
 
     public async Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small)
