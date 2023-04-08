@@ -72,7 +72,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             return;
         }
 
-        if (user.ReduceContextIfNeed(message.Text))
+        if (user.ReduceContextIfNeed(message.Text, _openAiService))
         {
             await _botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,

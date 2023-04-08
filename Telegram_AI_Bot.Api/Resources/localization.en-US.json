@@ -5,7 +5,7 @@
   "Balance": "Tokens left: {0}",
   "NoBalance": "Not enough resources.",
   "Settings": "⚙ Settings",
-  "ReducedContext": "The total number of characters in your dialog exceeds 4096 characters (It's all because of the GPT-3 limitation). That's why some messages in the dialog have been deleted.",
+  "ReducedContext": "The total number of characters in your dialog exceeds 4096 tokens (It's all because of the GPT-3 limitation). That's why some messages in the dialog have been deleted.",
   "SettingsText": {
     "Title": "<i><b>Settings</b></i>",
     "Mode": "Mode: ",

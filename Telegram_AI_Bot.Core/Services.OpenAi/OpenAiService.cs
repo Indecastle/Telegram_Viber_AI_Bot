@@ -16,13 +16,14 @@ public interface IOpenAiService
     Task<string?> ChatHandler(string requestText, IOpenAiUser user);
     IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user);
     Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small);
+    ChatRequest GetChatRequest(string requestText, IOpenAiUser user);
 }
 
 public class OpenAiService : IOpenAiService
 {
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
     private static readonly ChatPrompt[] TemplateSystemChatPrompt = { new("system", "You are a helpful assistant.\nYou are Chat GPT-4 version") };
-    private static readonly TikToken _tikToken = TikToken.EncodingForModel("gpt-3.5-turbo");
+    public static readonly TikToken TikTokenGPT3Model = TikToken.EncodingForModel("gpt-3.5-turbo");
     private static readonly string[] _stops = {"user", "assistant"};
 
     private readonly OpenAiConfiguration _openAiOptions;
@@ -75,8 +76,8 @@ public class OpenAiService : IOpenAiService
         finally
         {
             string chatRequestJson = JsonConvert.SerializeObject(chatRequest.Messages);
-            int tokens1 = _tikToken.Encode(chatRequestJson).Count;
-            int tokens2 = _tikToken.Encode(strBuilder.ToString()).Count;
+            int tokens1 = TikTokenGPT3Model.Encode(chatRequestJson).Count;
+            int tokens2 = TikTokenGPT3Model.Encode(strBuilder.ToString()).Count;
 
             var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
             var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
@@ -100,7 +101,7 @@ public class OpenAiService : IOpenAiService
 
         resultDialog = resultDialog.Concat(new[] { newPromptMessage });
 
-        return new ChatRequest(resultDialog, stops: _stops, model: user.ChatModel!.Value);
+        return new ChatRequest(resultDialog, model: user.ChatModel!.Value);
     }
 
     public async Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small)

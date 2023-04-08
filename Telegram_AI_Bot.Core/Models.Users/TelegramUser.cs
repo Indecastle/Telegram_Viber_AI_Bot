@@ -1,9 +1,12 @@
 ﻿using MyTemplate.App.Core.Models.Types;
+using Newtonsoft.Json;
+using OpenAI.Chat;
 using OpenAI.Images;
 using Telegram.Bot.Types;
 using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using TiktokenSharp;
 
 namespace Telegram_AI_Bot.Core.Models.Users;
 
@@ -205,13 +208,13 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         Balance += amount;
     }
 
-    public bool ReduceContextIfNeed(string messageText)
+    public bool ReduceContextIfNeed(string messageText, IOpenAiService openAiService)
     {
         if (ChatModel != ChatModel.Gpt35)
             return false;
         
         var reduced = false;
-        while (_messages.Aggregate(0, (sum, next) => next.Text.Length + sum) + messageText.Length > 4096)
+        while (OpenAiService.TikTokenGPT3Model.Encode(JsonConvert.SerializeObject(openAiService.GetChatRequest(messageText, this))).Count > 4000)
         {
             _messages.RemoveAt(0); 
             _messages.RemoveAt(0); 
