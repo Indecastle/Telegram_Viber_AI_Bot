@@ -74,7 +74,7 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
                 _logger.LogError("Polling failed with exception: {Exception}", ex);
 
                 // Cooldown if something goes wrong
-                await Task.Delay(TimeSpan.FromSeconds(0.5), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
             }
         }
     }

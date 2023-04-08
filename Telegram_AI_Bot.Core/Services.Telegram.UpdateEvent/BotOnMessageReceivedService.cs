@@ -104,7 +104,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         
         var action = command switch
         {
-            TelegramCommands.Start => MainMenuCommand(message, args, user, cancellationToken),
+            TelegramCommands.Start => StartCommand(message, args, user, cancellationToken),
             TelegramCommands.MainMenu => MainMenuCommand(message, args, user, cancellationToken),
             TelegramCommands.Settings => SettingsCommand(message, args, user, cancellationToken),
             TelegramCommands.Balance => BalanceCommand(message, args, user, cancellationToken),
@@ -114,6 +114,18 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         await action;
     }
 
+    private async Task StartCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(user.ChatModel))
+            await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: _localizer.GetString("ChooseChatModelBegin"),
+                replyMarkup: TelegramInlineMenus.SetChatModelBegin(_localizer, user),
+                cancellationToken: cancellationToken);
+        else
+            await MainMenuCommand(message, args, user, cancellationToken);
+    }
+    
     private async Task MainMenuCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
     {
         await _botClient.SendTextMessageAsync(

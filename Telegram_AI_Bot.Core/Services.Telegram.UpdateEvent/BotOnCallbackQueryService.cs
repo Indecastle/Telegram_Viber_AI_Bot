@@ -147,13 +147,8 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
                     _localizer.GetString("YouChoseChatModelAlert", user.ChatModel!.Value),
                     showAlert: true,
                     cancellationToken: cancellationToken);
-                
-                await _botClient.EditMessageTextAsync(
-                    chatId: callbackQuery.Message!.Chat.Id,
-                    messageId: callbackQuery.Message.MessageId,
-                    text: _localizer.GetString("YouChoseChatModel", user.ChatModel!.Value),
-                    parseMode: ParseMode.Html,
-                    cancellationToken: cancellationToken);
+
+                await KeyboardMainMenu(callbackQuery, args, cancellationToken);
                 return;
             }
         }
