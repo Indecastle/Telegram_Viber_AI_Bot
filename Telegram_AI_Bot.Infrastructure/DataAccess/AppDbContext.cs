@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Models.Viber.Users;
 
@@ -14,6 +15,7 @@ internal class AppDbContext : DbContext
 
     public DbSet<TelegramUser> Users { get; set; } = null!;
     public DbSet<CryptoTransaction> CryptoTransactions { get; set; } = null!;
+    public DbSet<OpenAiAllMessage> TelegramOpenAiAllMessages { get; set; } = null!;
     public DbSet<ViberUser> ViberUser { get; set; } = null!;
 
     public async Task SaveChangesAsync()

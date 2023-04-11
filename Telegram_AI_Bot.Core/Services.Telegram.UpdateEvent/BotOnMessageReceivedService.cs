@@ -66,8 +66,6 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         };
         
         await action;
-
-        await _unitOfWork.CommitAsync();
     }
 
     private void LogMessage(Message message, TelegramUser user)
@@ -112,6 +110,8 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         };
 
         await action;
+        
+        await _unitOfWork.CommitAsync();
     }
 
     private async Task StartCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)

@@ -13,7 +13,7 @@ namespace Telegram_AI_Bot.Core.Services.OpenAi;
 
 public interface IOpenAiService
 {
-    Task<string?> ChatHandler(string requestText, IOpenAiUser user);
+    Task<string> ChatHandler(string requestText, IOpenAiUser user);
     IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user);
     Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small);
     ChatRequest GetChatRequest(string requestText, IOpenAiUser user);
@@ -39,7 +39,7 @@ public class OpenAiService : IOpenAiService
         _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, _openAiOptions.OrganizationId));
     }
 
-    public async Task<string?> ChatHandler(string requestText, IOpenAiUser user)
+    public async Task<string> ChatHandler(string requestText, IOpenAiUser user)
     {
         requestText = requestText.Trim();
 

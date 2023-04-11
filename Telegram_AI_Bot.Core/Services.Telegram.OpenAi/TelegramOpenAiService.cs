@@ -28,6 +28,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IOpenAiService _openAiService;
     private readonly IJsonStringLocalizer _localizer;
+    private readonly IOpenAiAllMessageRepository _allMessageRepository;
 
     private static readonly int _streamDelayMilliseconds = 3000;
 
@@ -36,13 +37,15 @@ public class TelegramOpenAiService : ITelegramOpenAiService
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
         IOpenAiService openAiService,
-        IJsonStringLocalizer localizer)
+        IJsonStringLocalizer localizer,
+        IOpenAiAllMessageRepository allMessageRepository)
     {
         _botClient = botClient;
         _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _openAiService = openAiService;
         _localizer = localizer;
+        _allMessageRepository = allMessageRepository;
     }
 
     public async Task Handler(Message? message, TelegramUser user, CancellationToken cancellationToken)
@@ -82,17 +85,18 @@ public class TelegramOpenAiService : ITelegramOpenAiService
 
         if (user.SelectedMode == SelectedMode.Chat)
         {
-            if (user.IsEnabledStreamingChat())
-                try
-                {
+            try
+            {
+                if (user.IsEnabledStreamingChat())
                     await SendGradually(message, user, cancellationToken);
-                }
-                finally
-                {
-                    await _unitOfWork.CommitAsync();
-                }
-            else
-                await SendImmediately(message, user, cancellationToken);
+                else
+                    await SendImmediately(message, user, cancellationToken);
+            }
+            finally
+            {
+                await _unitOfWork.CommitAsync();
+            }
+            
         }
         else
         {
@@ -123,8 +127,9 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 cancellationToken: cancellationToken);
         else
             await _unitOfWork.CommitAsync();
-
+        
         await SendTextMessage(message, waitMessage.MessageId, textResult, cancellationToken);
+        await SaveMessage(storedUser, message.Text, textResult);
     }
 
     private async Task SendTextMessage(Message? message, int waitMessageId, string? textResult, CancellationToken cancellationToken)
@@ -157,6 +162,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     private async Task SendGradually(Message message, TelegramUser storedUser, CancellationToken cancellationToken)
     {
         Message? waitMessage = null;
+        var strBuilderTotal = new StringBuilder();
         var strBuilder = new StringBuilder();
         var strBuilderBuff = new StringBuilder();
         Task delaier = Task.Delay(0);
@@ -172,6 +178,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             }
             
             strBuilder.Append(result.FirstChoice);
+            strBuilderTotal.Append(result.FirstChoice);
             strBuilderBuff.Append(result.FirstChoice);
             
             if (string.IsNullOrWhiteSpace(result.FirstChoice))
@@ -206,5 +213,16 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             messageId: waitMessage.MessageId,
             text: strBuilder.ToString(),
             cancellationToken: cancellationToken);
+
+        await SaveMessage(storedUser, message.Text, strBuilderTotal.ToString());
+    }
+    
+    private async Task SaveMessage(TelegramUser user, string messageText, string textResult)
+    {
+        await _allMessageRepository.AddRangeAsync(new[]
+        {
+            new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, messageText, true, DateTimeOffset.UtcNow),
+            new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, textResult, false, DateTimeOffset.UtcNow),
+        });
     }
 }

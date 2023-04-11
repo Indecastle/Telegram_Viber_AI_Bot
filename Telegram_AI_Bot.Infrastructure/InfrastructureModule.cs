@@ -57,6 +57,7 @@ public static class InfrastructureModule
 
         services
             .AddScoped<IUserRepository, UserRepositoryAdapter>()
+            .AddScoped<IOpenAiAllMessageRepository, OpenAiAllMessageRepositoryAdapter>()
             .AddScoped<ICryptoTransactionRepository, CryptoTransactionRepositoryAdapter>();
 
         return services;
