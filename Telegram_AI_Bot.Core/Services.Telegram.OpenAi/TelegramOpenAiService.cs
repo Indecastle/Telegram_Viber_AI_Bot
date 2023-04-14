@@ -5,14 +5,11 @@ using MoreLinq.Extensions;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
-using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Telegram;
-using Telegram_AI_Bot.Core.Viber;
 
 namespace Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
 

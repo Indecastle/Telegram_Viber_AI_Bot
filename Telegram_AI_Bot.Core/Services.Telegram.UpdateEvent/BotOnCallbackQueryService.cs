@@ -5,12 +5,9 @@ using Microsoft.Extensions.Options;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.Payments;
-using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
-using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
 using Telegram_AI_Bot.Core.Services.Telegram.Payments;
 using Telegram_AI_Bot.Core.Telegram;
 
