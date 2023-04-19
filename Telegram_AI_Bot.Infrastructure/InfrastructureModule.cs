@@ -23,7 +23,7 @@ public static class InfrastructureModule
         configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         
         services.AddSingleton<IDateTimeProvider, DateTimeProviderAdapter>();
-        // services.AddHostedService<UpdateBalanceAtNight>();
+        services.AddHostedService<UpdateBalanceAtNight>();
         
 
         return services;
