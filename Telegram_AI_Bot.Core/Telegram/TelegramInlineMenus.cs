@@ -2,6 +2,7 @@ using System.Text;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using CryptoPay.Types;
 using Microsoft.Extensions.Localization;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models;
@@ -24,6 +25,8 @@ public static class TelegramInlineMenus
                         TelegramCommands.Keyboard.Balance),
                     InlineKeyboardButton.WithCallbackData(localizer.GetString("Settings"),
                         TelegramCommands.Keyboard.Settings),
+                    // InlineKeyboardButton.WithWebApp(localizer.GetString("WebApp_Test"),
+                    //     new WebAppInfo { Url = "https://cca5-37-26-196-208.ngrok-free.app/settings?tokenid=qwerty123wqEWQW" }),
                 },
                 new[]
                 {
@@ -72,6 +75,8 @@ public static class TelegramInlineMenus
                 },
                 new[]
                 {
+                    InlineKeyboardButton.WithCallbackData(localizer.GetString("SystemMessageMenu.Button"),
+                        TelegramCommands.Keyboard.Settings_SystemMessage),
                     user.SelectedMode == SelectedMode.Chat
                         ? InlineKeyboardButton.WithCallbackData(localizer.GetString("ChangeChatModel"),
                             TelegramCommands.Keyboard.Settings_SetChatModel)
@@ -283,4 +288,19 @@ public static class TelegramInlineMenus
         
         return str.ToString();
     }
+    
+    public static InlineKeyboardMarkup SystemMessageMenu(IJsonStringLocalizer localizer, TelegramUser user) =>
+        new(
+            new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithWebApp(localizer.GetString("SystemMessageMenu.Change"),
+                        new() { Url = "https://8a25-37-26-196-208.ngrok-free.app/settings"}),
+                    InlineKeyboardButton.WithCallbackData(localizer.GetString("SystemMessageMenu.Reset"),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SystemMessage,
+                            "Reset")),
+                },
+                BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Settings),
+            });
 }

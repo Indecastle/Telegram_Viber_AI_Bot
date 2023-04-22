@@ -22,7 +22,9 @@ using Viber.Bot.NetCore.Middleware;
 
 
 var builder = WebApplication.CreateBuilder(args);
-// builder.Services.AddControllers();
+
+builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddEndpointsApiExplorer();
 
 builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true);
 // Add services to the container.
@@ -94,6 +96,6 @@ var app = builder.Build();
 
 // app.UseCorrelationId();
 
-// app.MapControllers();
+app.MapControllers();
 
 app.Run();

@@ -75,7 +75,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         string command = args[0];
         args = args.Skip(1).ToArray();
 
-        if (!TelegramCommands.Keyboard.All.Contains(command.ToLowerInvariant()))
+        if (!TelegramCommands.Keyboard.All.Contains(command))
             return;
 
         var user = await _userRepository.ByUserIdAsync(callbackQuery.From.Id);
@@ -86,6 +86,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             TelegramCommands.Keyboard.Balance => KeyboardBalance(callbackQuery, args, user, cancellationToken),
             TelegramCommands.Keyboard.Payments => KeyboardPayments(callbackQuery, args, user, cancellationToken),
             TelegramCommands.Keyboard.Settings => KeyboardSettings(callbackQuery, args, user, cancellationToken),
+            TelegramCommands.Keyboard.Settings_SystemMessage => KeyboardSettingsSystemMessage(callbackQuery, args, user, cancellationToken),
             TelegramCommands.Keyboard.Settings_SetChatModel => KeyboardSettingsChatModel(callbackQuery, args, user,
                 cancellationToken),
             TelegramCommands.Keyboard.Settings_SetLanguage => KeyboardLanguage(callbackQuery, args, user,
@@ -94,6 +95,17 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         };
 
         await action;
+    }
+
+    private async Task KeyboardSettingsSystemMessage(CallbackQuery callbackQuery, string[] args, TelegramUser user, CancellationToken cancellationToken)
+    {
+        await _botClient.EditMessageTextAsync(
+            chatId: callbackQuery.Message!.Chat.Id,
+            messageId: callbackQuery.Message.MessageId,
+            text: _localizer.GetString("SystemMessageMenu.Title"),
+            replyMarkup: TelegramInlineMenus.SystemMessageMenu(_localizer, user),
+            parseMode: ParseMode.Html,
+            cancellationToken: cancellationToken);
     }
 
     private async Task KeyboardPayments(CallbackQuery callbackQuery, string[] args, TelegramUser user, CancellationToken cancellationToken)

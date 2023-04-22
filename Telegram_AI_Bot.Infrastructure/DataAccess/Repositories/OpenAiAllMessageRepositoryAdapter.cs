@@ -1,11 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Telegram.Bot.Types;
-using Telegram_AI_Bot.Core.Common;
-using Telegram_AI_Bot.Core.Models;
-using Telegram_AI_Bot.Core.Models.Users;
+﻿using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
-using Telegram_AI_Bot.Core.Telegram;
-using Webinex.Coded;
+
 // using User = Telegram_AI_Bot.Core.Models.Users.User;
 
 namespace Telegram_AI_Bot.Infrastructure.DataAccess.Repositories;
