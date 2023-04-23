@@ -61,6 +61,10 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public void SetChatModel(ChatModel model)
     {
         ChatModel = model;
+        if (model == ChatModel.Gpt4)
+        {
+            EnabledStreamingChat = true;
+        }
     }
     
     public void SetLanguage(string lang)

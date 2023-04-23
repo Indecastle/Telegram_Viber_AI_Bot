@@ -75,14 +75,14 @@ public class ExchangeRatesService : BackgroundService
     private async Task UpdateRates(CancellationToken cancellationToken)
     {
         var rates = await _cryptoTonClient.GetExchangeRatesAsync(cancellationToken);
-        _rates.Rate_Ton_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.TON && x.Target == Assets.RUB)?.Rate;
-        _rates.Rate_Usdt_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.USDT && x.Target == Assets.RUB)?.Rate;
-        _rates.Rate_Busd_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BUSD && x.Target == Assets.RUB)?.Rate;
-        _rates.Rate_Usdc_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.USDC && x.Target == Assets.RUB)?.Rate;
-        _rates.Rate_Busd_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BUSD && x.Target == Assets.RUB)?.Rate;
-        _rates.Rate_BTC_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BTC && x.Target == Assets.RUB)?.Rate;
-        _rates.Rate_Eth_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.ETH && x.Target == Assets.RUB)?.Rate;
-        _rates.Rate_Bnb_Rub = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BNB && x.Target == Assets.RUB)?.Rate;
+        _rates.Rate_Ton_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.TON && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_Usdt_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.USDT && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_Busd_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BUSD && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_Usdc_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.USDC && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_Busd_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BUSD && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_BTC_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BTC && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_Eth_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.ETH && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_Bnb_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BNB && x.Target == Assets.USD)?.Rate;
         
         _logger.LogWarning("Updated rates");
     }

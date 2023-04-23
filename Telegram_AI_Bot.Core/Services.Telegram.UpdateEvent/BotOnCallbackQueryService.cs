@@ -100,7 +100,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     {
         if (args.Length == 1)
         {
-            if (!_rates.Rate_Ton_Rub.HasValue)
+            if (!_rates.Rate_Ton_Usd.HasValue)
                 return;
 
             await _botClient.EditMessageTextAsync(
@@ -134,6 +134,12 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     {
         if (args.FirstOrDefault() is { } arg && ChatModel.All.Contains(arg))
         {
+            if (arg == user.ChatModel)
+            {
+                await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                return;
+            }
+            
             user.SetChatModel(arg!);
             await _unitOfWork.CommitAsync();
 

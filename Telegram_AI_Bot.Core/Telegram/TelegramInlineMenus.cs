@@ -91,7 +91,7 @@ public static class TelegramInlineMenus
                 },
                 new[]
                 {
-                    user.SelectedMode == SelectedMode.Chat
+                    user.SelectedMode == SelectedMode.Chat && user.ChatModel != ChatModel.Gpt4
                         ? InlineKeyboardButton.WithCallbackData(
                             localizer.GetString(user.EnabledStreamingChat ? "DisableStreamingChat" : "EnableStreamingChat"),
                             TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings, "SwitchStreamingChat"))
@@ -180,14 +180,14 @@ public static class TelegramInlineMenus
 
     public static InlineKeyboardMarkup Payments(IJsonStringLocalizer localizer, TelegramUser user, PaymentsConfiguration paymentsOptions, IExchangeRates rates, long index)
     {
-        var amount = paymentsOptions.TonPriceTuples[index].Rub;
-        var ton = rates.GetPrice(Assets.RUB, Assets.TON, amount);
-        var usdt = rates.GetPrice(Assets.RUB, Assets.USDT, amount);
-        var usdc = rates.GetPrice(Assets.RUB, Assets.USDC, amount);
-        var busd = rates.GetPrice(Assets.RUB, Assets.BUSD, amount);
-        var eth = rates.GetPrice(Assets.RUB, Assets.ETH, amount);
-        var bnb = rates.GetPrice(Assets.RUB, Assets.BNB, amount);
-        var btc = rates.GetPrice(Assets.RUB, Assets.BTC, amount);
+        var amount = paymentsOptions.TonPriceTuples[index].Money;
+        var ton = rates.GetPrice(Assets.USD, Assets.TON, amount);
+        var usdt = rates.GetPrice(Assets.USD, Assets.USDT, amount);
+        var usdc = rates.GetPrice(Assets.USD, Assets.USDC, amount);
+        var busd = rates.GetPrice(Assets.USD, Assets.BUSD, amount);
+        var eth = rates.GetPrice(Assets.USD, Assets.ETH, amount);
+        var bnb = rates.GetPrice(Assets.USD, Assets.BNB, amount);
+        var btc = rates.GetPrice(Assets.USD, Assets.BTC, amount);
         
         return new(
             new[]
@@ -200,28 +200,28 @@ public static class TelegramInlineMenus
                 new[]
                 {
                     InlineKeyboardButton.WithCallbackData($"TON ({rates.Round(ton.Value, 2)})",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.TON.ToString(), index.ToString())),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.TON.ToString(), index.ToString())),
                     InlineKeyboardButton.WithCallbackData($"USDT ({rates.Round(usdt.Value, 2)})",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.USDT.ToString(), index.ToString())),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.USDT.ToString(), index.ToString())),
                 },
                 new[]
                 {
                     InlineKeyboardButton.WithCallbackData($"USDC ({rates.Round(usdc.Value, 2)})",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.USDC.ToString(), index.ToString())),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.USDC.ToString(), index.ToString())),
                     InlineKeyboardButton.WithCallbackData($"BUSD ({rates.Round(busd.Value, 2)})",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.BUSD.ToString(), index.ToString())),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.BUSD.ToString(), index.ToString())),
                 },
                 new[]
                 {
                     InlineKeyboardButton.WithCallbackData($"ETH ({rates.Round(eth.Value, 5)})",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.ETH.ToString(), index.ToString())),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.ETH.ToString(), index.ToString())),
                     InlineKeyboardButton.WithCallbackData($"BNB ({rates.Round(bnb.Value, 5)})",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.BNB.ToString(), index.ToString())),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.BNB.ToString(), index.ToString())),
                 },
                 new[]
                 {
                     InlineKeyboardButton.WithCallbackData($"BTC ({rates.Round(btc.Value, 6)})",
-                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.RUB.ToString(), Assets.BTC.ToString(), index.ToString())),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.BTC.ToString(), index.ToString())),
                 },
                 BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Payments),
             });
@@ -259,7 +259,7 @@ public static class TelegramInlineMenus
                 paymentsOptions.TonPriceTuples
                     .Select((x, i) => new[]
                     {
-                        InlineKeyboardButton.WithCallbackData(localizer.GetString("TonCoin.ButtonItem", x.Rub),
+                        InlineKeyboardButton.WithCallbackData(localizer.GetString("TonCoin.ButtonItem", x.Money),
                             TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, i.ToString()))
                     })
                     .Concat(new[] { BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Balance) })

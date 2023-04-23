@@ -89,6 +89,15 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 else
                     await SendImmediately(message, user, cancellationToken);
             }
+            catch (NoEnoughBalance e)
+            {
+                if (e.IsOnlyOverRequest)
+                    await _botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: _localizer.GetString("NoBalance"),
+                        replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer, false),
+                        cancellationToken: cancellationToken);
+            }
             finally
             {
                 await _unitOfWork.CommitAsync();
@@ -163,55 +172,59 @@ public class TelegramOpenAiService : ITelegramOpenAiService
         var strBuilder = new StringBuilder();
         var strBuilderBuff = new StringBuilder();
         Task delaier = Task.Delay(0);
-        
-        await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser))
+
+        try
         {
-            if (waitMessage is null)
+            await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser))
             {
-                waitMessage = await _botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: ".",
-                    cancellationToken: cancellationToken);
-            }
-            
-            strBuilder.Append(result.FirstChoice);
-            strBuilderTotal.Append(result.FirstChoice);
-            strBuilderBuff.Append(result.FirstChoice);
-            
-            if (string.IsNullOrWhiteSpace(result.FirstChoice))
-                continue;
-            
-            if (strBuilder.Length < 4096)
-            {
-                if (delaier.IsCompleted)
+                if (waitMessage is null)
                 {
-                    strBuilderBuff.Clear();
-                    delaier = Task.Delay(_streamDelayMilliseconds);
-                    await _botClient.EditMessageTextAsync(
+                    waitMessage = await _botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
-                        messageId: waitMessage.MessageId,
-                        text: strBuilder.ToString(),
+                        text: ".",
+                        cancellationToken: cancellationToken);
+                }
+            
+                strBuilder.Append(result.FirstChoice);
+                strBuilderTotal.Append(result.FirstChoice);
+                strBuilderBuff.Append(result.FirstChoice);
+            
+                if (string.IsNullOrWhiteSpace(result.FirstChoice))
+                    continue;
+
+                if (strBuilder.Length < 4096)
+                {
+                    if (delaier.IsCompleted)
+                    {
+                        strBuilderBuff.Clear();
+                        delaier = Task.Delay(_streamDelayMilliseconds);
+                        await EditCurrentMessage(message.Chat.Id, waitMessage, strBuilder.ToString(), true,
+                            cancellationToken);
+                    }
+                }
+                else
+                {
+                    strBuilder.Clear();
+                    strBuilder.Append(strBuilderBuff);
+                    waitMessage = await _botClient.SendTextMessageAsync(
+                        chatId: message.Chat.Id,
+                        text: result.FirstChoice,
                         cancellationToken: cancellationToken);
                 }
             }
-            else
-            {
-                strBuilder.Clear();
-                strBuilder.Append(strBuilderBuff);
-                waitMessage = await _botClient.SendTextMessageAsync(
-                    chatId: message.Chat.Id,
-                    text: result.FirstChoice,
-                    cancellationToken: cancellationToken);
-            }
+            
+            await EditCurrentMessage(message.Chat.Id, waitMessage, strBuilder.ToString(), strBuilderBuff.Length > 0, cancellationToken);
+            await SaveMessage(storedUser, message.Text, strBuilderTotal.ToString());
         }
-
-        await _botClient.EditMessageTextAsync(
-            chatId: message.Chat.Id,
-            messageId: waitMessage.MessageId,
-            text: strBuilder.ToString(),
-            cancellationToken: cancellationToken);
-
-        await SaveMessage(storedUser, message.Text, strBuilderTotal.ToString());
+        catch (NoEnoughBalance e)
+        {
+            if (!e.IsOnlyOverRequest)
+            {
+                await SaveMessage(storedUser, message.Text, strBuilderTotal.ToString());
+                await EditCurrentMessage(message.Chat.Id, waitMessage, strBuilder.ToString(), strBuilderBuff.Length > 0, cancellationToken);
+            }
+            throw;
+        }
     }
     
     private async Task SaveMessage(TelegramUser user, string messageText, string textResult)
@@ -221,5 +234,16 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, messageText, true, DateTimeOffset.UtcNow),
             new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, textResult, false, DateTimeOffset.UtcNow),
         });
+    }
+
+    private async Task EditCurrentMessage(long chatId, Message waitMessage, string responseText, bool canEdit, CancellationToken cancellationToken)
+    {
+        if (!canEdit) return;
+        
+        await _botClient.EditMessageTextAsync(
+            chatId: chatId,
+            messageId: waitMessage.MessageId,
+            text: responseText,
+            cancellationToken: cancellationToken);
     }
 }

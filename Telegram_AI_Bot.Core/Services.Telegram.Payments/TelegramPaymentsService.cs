@@ -60,7 +60,7 @@ public class TelegramPaymentsService : ITelegramPaymentsService
         if (!int.TryParse(args[2], out var index))
             throw new ArgumentException();
 
-        var amount = _paymentsOptions.TonPriceTuples[index].Rub;
+        var amount = _paymentsOptions.TonPriceTuples[index].Money;
         var tokens = _paymentsOptions.TonPriceTuples[index].Token;
 
         var rateFrom = Enum.Parse<Assets>(args[0]);
@@ -78,11 +78,12 @@ public class TelegramPaymentsService : ITelegramPaymentsService
             rate,
             (double)amount,
             payload: $"{user.UserId},{tokens}",
-            description: _localizer.GetString("TonCoin.InvoiceDescription"),
+            description: _localizer.GetString("TonCoin.InvoiceDescription", tokens),
             paidBtnName: PaidButtonNames.openBot,
             paidBtnUrl: _commonConfiguration.BotUrl,
             allowAnonymous: false,
             allowComments: false,
+            expiresIn: 3600, // seconds
             cancellationToken: cancellationToken);
 
         var payUrl = response.PayUrl;

@@ -22,7 +22,8 @@ public interface IOpenAiService
 public class OpenAiService : IOpenAiService
 {
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
-    private static readonly ChatPrompt[] TemplateSystemChatPrompt = { new("system", "You are a helpful assistant.\nYou are Chat GPT-4 version") };
+    private static readonly ChatPrompt[] TemplateSystemChatPrompt3 = { new("system", "You are a helpful assistant.\nYou are Chat GPT-3.5 version") };
+    private static readonly ChatPrompt[] TemplateSystemChatPrompt4 = { new("system", "You are a helpful assistant.\nYou are Chat GPT-4 version") };
     public static readonly TikToken TikTokenGPT3Model = TikToken.EncodingForModel("gpt-3.5-turbo");
     private static readonly string[] _stops = {"user", "assistant"};
 
@@ -42,15 +43,19 @@ public class OpenAiService : IOpenAiService
     public async Task<string> ChatHandler(string requestText, IOpenAiUser user)
     {
         requestText = requestText.Trim();
-
-        var chatRequest = GetChatRequest(requestText, user);
-        var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest);
-        var resultText = result.FirstChoice.Message.ToString().Trim();
         
         var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
         var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
+
+        var chatRequest = GetChatRequest(requestText, user);
         
-        // string jsonString = JsonConvert.SerializeObject(chatRequest.Messages);
+        string chatRequestJson = JsonConvert.SerializeObject(chatRequest.Messages);
+        int requestTokens = TikTokenGPT3Model.Encode(chatRequestJson).Count * factorRequest;
+        CheckEnoughBalance(user, requestTokens, "");
+        
+        var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest);
+        var resultText = result.FirstChoice.Message.ToString().Trim();
+        
         UserContextHandler(user, requestText, resultText);
         user.ReduceChatTokens(result.Usage.PromptTokens*factorRequest + result.Usage.CompletionTokens*factorResponse, _openAiOptions);
 
@@ -64,6 +69,11 @@ public class OpenAiService : IOpenAiService
         var chatRequest = GetChatRequest(requestText, user);
 
         var strBuilder = new StringBuilder();
+        
+        string chatRequestJson = JsonConvert.SerializeObject(chatRequest.Messages);
+        var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
+        int requestTokens = TikTokenGPT3Model.Encode(chatRequestJson).Count * factorRequest;
+        CheckEnoughBalance(user, requestTokens, "");
 
         try
         {
@@ -71,27 +81,34 @@ public class OpenAiService : IOpenAiService
             {
                 strBuilder.Append(result.FirstChoice);
                 yield return result;
+                CheckEnoughBalance(user, requestTokens, strBuilder.ToString());
             }
         }
         finally
         {
-            string chatRequestJson = JsonConvert.SerializeObject(chatRequest.Messages);
-            int tokens1 = TikTokenGPT3Model.Encode(chatRequestJson).Count;
-            int tokens2 = TikTokenGPT3Model.Encode(strBuilder.ToString()).Count;
-
-            var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
             var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
+            int responseTokens = TikTokenGPT3Model.Encode(strBuilder.ToString()).Count * factorResponse;
 
             UserContextHandler(user, requestText, strBuilder.ToString());
-            user.ReduceChatTokens(tokens1*factorRequest + tokens2*factorResponse + 1, _openAiOptions);
+            user.ReduceChatTokens(requestTokens + responseTokens + 1, _openAiOptions);
         }
+    }
+
+    private void CheckEnoughBalance(IOpenAiUser user, int requestTokens, string responseText)
+    {
+        var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value * 2 : 1;
+        int responseTokens = TikTokenGPT3Model.Encode(responseText).Count * factorResponse;
+
+        if (user.Balance < requestTokens + responseTokens)
+            throw new NoEnoughBalance(user.Balance < requestTokens);
     }
 
     public ChatRequest GetChatRequest(string requestText, IOpenAiUser user)
     {
         var newPromptMessage = new ChatPrompt("user", requestText);
 
-        IEnumerable<ChatPrompt> resultDialog = TemplateSystemChatPrompt;
+        IEnumerable<ChatPrompt> resultDialog = user.ChatModel == ChatModel.Gpt35
+            ? TemplateSystemChatPrompt3 : TemplateSystemChatPrompt4;
 
         if (user.IsEnabledContext())
             resultDialog = resultDialog.Concat(
@@ -127,5 +144,21 @@ public class OpenAiService : IOpenAiService
             user.AddMessage(resultText, false, now);
             user.RemoveUnnecessary();
         }
+    }
+}
+
+class NoEnoughBalance : Exception
+{
+    public bool IsOnlyOverRequest { get; }
+
+    public NoEnoughBalance(bool isOnlyOverRequest)
+    {
+        IsOnlyOverRequest = isOnlyOverRequest;
+    }
+
+    public NoEnoughBalance(int balance)
+        : base($"No Enough Balance: {balance}")
+    {
+
     }
 }
