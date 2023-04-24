@@ -26,5 +26,6 @@ internal class UserConfiguration : IEntityTypeConfiguration<TelegramUser>
         builder.OwnsOne(x => x.SelectedMode, e => e.Property(x => x.Value).HasColumnName("SelectedMode"));
         builder.OwnsOne(x => x.Role, e => e.Property(x => x.Value).HasColumnName("Role"));
         builder.OwnsOne(x => x.ChatModel, e => e.Property(x => x.Value).HasColumnName("ChatModel"));
+        builder.OwnsOne(x => x.WaitState, e => e.Property(x => x.Value).HasColumnName("WaitState"));
     }
 }

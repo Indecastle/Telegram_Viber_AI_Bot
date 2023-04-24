@@ -7,14 +7,15 @@ public class TelegramCommands
         public const string MainMenu = "--mainmenu";
         public const string Balance = "--balance";
         public const string Settings = "--settings";
-        public const string Settings_SetLanguage = "--settings_set_language";
-        public const string Settings_SetChatModel = "--chat_model";
+        public const string Settings_SetLanguage = "--settings_Set_Language";
+        public const string Settings_SetChatModel = "--settings_SetChatModel";
+        public const string Settings_SystemMessage = "--settings_SystemMessage";
         public const string Help = "--help";
         public const string Payments = "--payments";
 
         public static readonly string[] All =
         {
-            MainMenu, Balance, Settings, Settings_SetLanguage, Settings_SetChatModel, Help, Payments
+            MainMenu, Balance, Settings, Settings_SetLanguage, Settings_SetChatModel, Settings_SystemMessage, Help, Payments
         };
     }
     

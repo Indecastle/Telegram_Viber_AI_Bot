@@ -107,8 +107,11 @@ public class OpenAiService : IOpenAiService
     {
         var newPromptMessage = new ChatPrompt("user", requestText);
 
-        IEnumerable<ChatPrompt> resultDialog = user.ChatModel == ChatModel.Gpt35
-            ? TemplateSystemChatPrompt3 : TemplateSystemChatPrompt4;
+        IEnumerable<ChatPrompt> resultDialog = !string.IsNullOrWhiteSpace(user.SystemMessage)
+            ? new ChatPrompt[] { new("system", user.SystemMessage) }
+            : user.ChatModel == ChatModel.Gpt35
+                ? TemplateSystemChatPrompt3
+                : TemplateSystemChatPrompt4;
 
         if (user.IsEnabledContext())
             resultDialog = resultDialog.Concat(

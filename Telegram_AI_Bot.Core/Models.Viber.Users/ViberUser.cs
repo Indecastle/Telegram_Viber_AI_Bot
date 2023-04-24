@@ -19,6 +19,7 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public string Name { get; protected set; }
     public string Language { get; protected set; }
     public long Balance { get; set; }
+    public string? SystemMessage { get; } = null;
     public ChatModel ChatModel => ChatModel.Gpt4;
     public SelectedMode SelectedMode { get; set; }
     public string? Avatar { get; protected set; }

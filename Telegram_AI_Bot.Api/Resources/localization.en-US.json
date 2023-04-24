@@ -54,10 +54,21 @@
   "EnableContext": "Enable Context",
   "DisableStreamingChat": "Disable streaming (beta)",
   "EnableStreamingChat": "Enable streaming (beta)",
-  "ClearContext": "Clear context",
+  "ClearContext": "\uD83D\uDDD1 Clear context",
   "DeletedContext": "Context has been deleted",
   "GetContact": "Owner's contact",
   "MyId": "My ID",
   "Wait": "Please wait...",
-  "PaymentDescription": "You will buy tokens: {0}"
+  "PaymentDescription": "You will buy tokens: {0}",
+  "SystemMessageMenu": {
+    "Button": "Change system message",
+    "Title": "Current system message:\n{0}",
+    "TitleDefault": "Current system message:\nYou are a helpful assistant",
+    "Change": "Change",
+    "Reset": "Reset",
+    "ResetTitle": "The system message has been reset",
+    "HasBeenChanged": "The system message has been changed",
+    "ChangeSystemMessage": "Send a new system message",
+    "InvalidateChange": "Invalid message. Please send again"
+  }
 }

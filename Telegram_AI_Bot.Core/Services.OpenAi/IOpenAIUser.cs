@@ -6,6 +6,7 @@ namespace Telegram_AI_Bot.Core.Services.OpenAi;
 public interface IOpenAiUser
 {
     long Balance { get; }
+    string? SystemMessage { get; }
     ChatModel? ChatModel { get; }
     SelectedMode SelectedMode { get; set; }
     IReadOnlyCollection<OpenAiMessage> Messages { get; }

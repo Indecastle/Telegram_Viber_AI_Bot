@@ -24,10 +24,12 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public string? Username { get; protected set; }
     public string Language { get; protected set; }
     public long Balance { get; protected set; }
+    public string? SystemMessage { get; protected set; }
     public ChatModel? ChatModel { get; protected set; }
     public bool EnabledContext { get; protected set; }
     public bool EnabledStreamingChat { get; protected set; }
     public SelectedMode SelectedMode { get; set; }
+    public WaitState? WaitState { get; set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
     public DateTimeOffset StartAt { get; protected set; }
@@ -56,6 +58,28 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
             return;
 
         Role = role;
+    }
+
+    public void SetSystemMessage(string? message)
+    {
+        Asserts.Arg(message)!.NotNullOrWhiteSpace();
+        SystemMessage = message;
+    }
+    
+    public void ResetWaitState()
+    {
+        WaitState = null;
+    }
+    
+    public void SetWaitState(WaitState state)
+    {
+        if (state != WaitState)
+            WaitState = state;
+    }
+    
+    public void ResetSystemMessage()
+    {
+        SystemMessage = null;
     }
     
     public void SetChatModel(ChatModel model)

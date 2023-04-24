@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.Payments;
 using Telegram.Bot.Types.ReplyMarkups;
+using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
@@ -15,7 +17,7 @@ namespace Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 
 public interface IBotOnMessageReceivedService
 {
-    Task BotOnMessageReceived(Message message, CancellationToken cancellationToken);
+    Task BotOnMessageReceived(Message message, bool isEditedMessage, CancellationToken cancellationToken);
 }
 
 public class BotOnMessageReceivedService : IBotOnMessageReceivedService
@@ -42,13 +44,17 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         _localizer = localizer;
     }
 
-    public async Task BotOnMessageReceived(Message message, CancellationToken cancellationToken)
+    public async Task BotOnMessageReceived(Message message, bool isEditedMessage, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
         TelegramMessageHelper.SetCulture(user.Language);
-
-
         LogMessage(message, user);
+
+        if (!isEditedMessage && user.WaitState != null)
+        {
+            await WaitStateHandler(message, user, cancellationToken);
+            return;
+        }
 
         if (message is {Type: MessageType.SuccessfulPayment})
         {
@@ -66,6 +72,44 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         };
         
         await action;
+    }
+
+    private async Task WaitStateHandler(Message message, TelegramUser user, CancellationToken cancellationToken)
+    {
+        var action = user.WaitState switch
+        {
+            var x when x == WaitState.SystemMessage => ChangeSystemMessage(message, user, cancellationToken),
+            _ => ResetWaitState(message, user, cancellationToken)
+        };
+        
+        await action;
+    }
+
+    private async Task ChangeSystemMessage(Message message, TelegramUser user, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(message.Text) || message.Text.StartsWith("/"))
+        {
+            await _botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: _localizer.GetString("SystemMessageMenu.InvalidateChange"),
+                cancellationToken: cancellationToken);
+            return;
+        }
+        user.SetSystemMessage(message.Text);
+        user.ResetWaitState();
+        await _unitOfWork.CommitAsync();
+        await _botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: _localizer.GetString("SystemMessageMenu.HasBeenChanged"),
+            replyMarkup: TelegramInlineMenus.BackPrevMenu(_localizer,
+                TelegramCommands.Keyboard.Settings_SystemMessage),
+            cancellationToken: cancellationToken);
+    }
+    
+    private async Task ResetWaitState(Message message, TelegramUser user, CancellationToken cancellationToken)
+    {
+        user.ResetWaitState();
+        await _unitOfWork.CommitAsync();
     }
 
     private void LogMessage(Message message, TelegramUser user)

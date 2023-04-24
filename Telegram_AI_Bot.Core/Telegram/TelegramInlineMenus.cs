@@ -33,6 +33,13 @@ public static class TelegramInlineMenus
         return inlineKeyboard;
     }
 
+    public static InlineKeyboardMarkup BackPrevMenu(IJsonStringLocalizer localizer,  string callbackData) =>
+        new(
+            new[]
+            {
+                BackPrev(localizer.GetString("Back"), callbackData),
+            });
+    
     public static InlineKeyboardButton[] BackPrev(string text, string callbackData, bool isVisible = true) =>
         isVisible ? new[]
             {
@@ -76,6 +83,13 @@ public static class TelegramInlineMenus
                         ? InlineKeyboardButton.WithCallbackData(localizer.GetString("ChangeChatModel"),
                             TelegramCommands.Keyboard.Settings_SetChatModel)
                         : null,
+                },
+                new[]
+                {
+                    user.SelectedMode == SelectedMode.Chat
+                    ? InlineKeyboardButton.WithCallbackData(localizer.GetString("SystemMessageMenu.Button"),
+                        TelegramCommands.Keyboard.Settings_SystemMessage)
+                    : null
                 },
                 new[]
                 {
@@ -283,4 +297,20 @@ public static class TelegramInlineMenus
         
         return str.ToString();
     }
+    
+    public static InlineKeyboardMarkup SystemMessageMenu(IJsonStringLocalizer localizer, TelegramUser user) =>
+        new(
+            new[]
+            {
+                new[]
+                {
+                    InlineKeyboardButton.WithCallbackData(localizer.GetString("SystemMessageMenu.Change"),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SystemMessage,
+                            "Change")),
+                    InlineKeyboardButton.WithCallbackData(localizer.GetString("SystemMessageMenu.Reset"),
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Settings_SystemMessage,
+                            "Reset")),
+                },
+                BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Settings),
+            });
 }
