@@ -50,6 +50,9 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         TelegramMessageHelper.SetCulture(user.Language);
         LogMessage(message, user);
 
+        if (user.IsTyping)
+            return;
+        
         if (!isEditedMessage && user.WaitState != null)
         {
             await WaitStateHandler(message, user, cancellationToken);

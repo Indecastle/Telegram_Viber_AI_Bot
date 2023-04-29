@@ -33,6 +33,8 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
     public DateTimeOffset StartAt { get; protected set; }
+    public bool IsTyping { get; protected set; }
+    public DateTimeOffset? LastTypingAt { get; protected set; }
     public IReadOnlyCollection<OpenAiMessage> Messages => _messages.AsReadOnly();
 
     public void SetName(Name name)
@@ -223,12 +225,18 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public bool IsNeedUpdateBaseInfo(User internalUser) =>
         internalUser.FirstName != Name.FirstName
         || internalUser.LastName != Name.LastName
-        || internalUser.Username != Username;
+        || internalUser.Username != Username
+        || IsTypingNeedToReset();
+
+    public bool IsTypingNeedToReset() =>
+        IsTyping && LastTypingAt < DateTimeOffset.UtcNow - TimeSpan.FromSeconds(Constants.LIFETIME_OF_TYPING);
 
     public void UpdateBaseInfo(User internalUser)
     {
         Name = new Name(internalUser.FirstName, internalUser.LastName);
         Username = internalUser.Username;
+        if (IsTypingNeedToReset())
+            SetTyping(false);
     }
 
     public void IncreaseBalance(long amount)
@@ -250,5 +258,11 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         }
 
         return reduced;
+    }
+
+    public void SetTyping(bool value)
+    {
+        IsTyping = value;
+        LastTypingAt = DateTimeOffset.UtcNow;
     }
 }

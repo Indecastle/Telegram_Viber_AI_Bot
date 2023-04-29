@@ -6,4 +6,5 @@ public class Constants
     public const int FREE_START_BALANCE = 10000;
     public const int LOW_LIMIT_BALANCE = 5000;
     public const int GPT4_FACTOR = 15;
+    public const int LIFETIME_OF_TYPING = 20; // seconds
 }

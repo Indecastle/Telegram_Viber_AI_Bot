@@ -24,7 +24,9 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
     public SelectedMode SelectedMode { get; set; }
     public string? Avatar { get; protected set; }
     public Role Role { get; protected set; }
-    
+
+    public bool IsTyping => false;
+    public DateTimeOffset? LastTypingAt { get; }
     public IReadOnlyCollection<OpenAiMessage> Messages => _messages.AsReadOnly();
 
     public void SetName(string name)

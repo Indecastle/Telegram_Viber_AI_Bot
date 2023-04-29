@@ -51,7 +51,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             chatId: message.Chat.Id,
             chatAction: ChatAction.Typing,
             cancellationToken: cancellationToken);
-        
+
         if (string.IsNullOrWhiteSpace(user.ChatModel))
         {
             await _botClient.SendTextMessageAsync(
@@ -84,6 +84,9 @@ public class TelegramOpenAiService : ITelegramOpenAiService
         {
             try
             {
+                user.SetTyping(true);
+                await _unitOfWork.CommitAsync();
+                
                 if (user.IsEnabledStreamingChat())
                     await SendGradually(message, user, cancellationToken);
                 else
@@ -100,6 +103,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             }
             finally
             {
+                user.SetTyping(false);
                 await _unitOfWork.CommitAsync();
             }
             

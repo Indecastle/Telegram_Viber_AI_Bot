@@ -9,6 +9,8 @@ public interface IOpenAiUser
     string? SystemMessage { get; }
     ChatModel? ChatModel { get; }
     SelectedMode SelectedMode { get; set; }
+    bool IsTyping { get; }
+    public DateTimeOffset? LastTypingAt { get; }
     IReadOnlyCollection<OpenAiMessage> Messages { get; }
     bool IsPositiveBalance();
     bool ClearContext();
