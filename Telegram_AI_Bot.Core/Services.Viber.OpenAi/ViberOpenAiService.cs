@@ -1,3 +1,4 @@
+using System.Transactions;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using Telegram_AI_Bot.Core.Models;
@@ -50,9 +51,14 @@ public class ViberOpenAiService : IViberOpenAiService
             return;
         }
 
+        using var transactionScope = new TransactionScope(
+            TransactionScopeOption.RequiresNew,
+            new TransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead },
+            TransactionScopeAsyncFlowOption.Enabled);
+        
         if (storedUser.SelectedMode == SelectedMode.Chat)
         {
-            var textResult = await _openAiService.ChatHandler(message.Text, storedUser);
+            var textResult = await _openAiService.ChatHandler(message.Text, storedUser, cancellationToken: CancellationToken.None);
 
             if (!string.IsNullOrEmpty(textResult))
                 await _unitOfWork.CommitAsync();
@@ -78,5 +84,7 @@ public class ViberOpenAiService : IViberOpenAiService
                 Keyboard = newMessage.Keyboard
             });
         }
+        
+        transactionScope.Complete();
     }
 }

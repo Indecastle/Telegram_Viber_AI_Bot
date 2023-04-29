@@ -56,6 +56,9 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
 
         var user = await _userRepository.GetOrCreateIfNotExistsAsync(callbackQuery.From);
         TelegramMessageHelper.SetCulture(user.Language);
+        
+        // if (user.IsTyping)
+        //     return;
 
         LogCallbackQuery(callbackQuery, user);
 

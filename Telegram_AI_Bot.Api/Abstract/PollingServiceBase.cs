@@ -1,3 +1,5 @@
+using System.Transactions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -6,6 +8,7 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram_AI_Bot.Api.Services;
+using Telegram_AI_Bot.Infrastructure.DataAccess;
 
 namespace Telegram_AI_Bot.Api.Abstract;
 
@@ -39,6 +42,8 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
 
     private async Task DoWork(CancellationToken stoppingToken)
     {
+        // await TestEF();
+        
         // Make sure we receive updates until Cancellation Requested,
         // no matter what errors our ReceiveAsync get
         while (!stoppingToken.IsCancellationRequested)
@@ -78,6 +83,61 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
             }
         }
     }
+
+    // private async Task TestEF()
+    // {
+    //     Console.WriteLine("------------------------");
+    //     Test1();
+    //     await Task.Delay(2000);
+    //     Test2();
+    //     await Task.Delay(100);
+    //     Test3();
+    // }
+    //
+    // private async Task Test1()
+    // {
+    //     
+    //     using var scope = _serviceProvider.CreateScope();
+    //     AppDbContext _db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //     using var scopeTr = new TransactionScope(
+    //         TransactionScopeOption.RequiresNew,
+    //         new TransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead },
+    //         TransactionScopeAsyncFlowOption.Enabled);
+    //     var user = await _db.Users.FirstAsync(x => x.UserId == 424269317);
+    //     // await using var trans = await _db.Database.BeginTransactionAsync();
+    //     
+    //
+    //     // user.IncreaseBalance(-500);
+    //     user.SetSystemMessage("hello1-" + Guid.NewGuid());
+    //     await Task.Delay(5000);
+    //     await _db.SaveChangesAsync();
+    //     // await trans.CommitAsync();
+    //     scopeTr.Complete();
+    //     Console.WriteLine("1111111111111111111111111111111");
+    // }
+    //
+    // private async Task Test2()
+    // {
+    //     using var scope = _serviceProvider.CreateScope();
+    //     AppDbContext _db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //     var user = await _db.Users.FirstAsync(x => x.UserId == 424269317);
+    //     // user.IncreaseBalance(300);
+    //     user.SetSystemMessage("hello2-" + Guid.NewGuid());
+    //     await _db.SaveChangesAsync();
+    //     
+    //     Console.WriteLine("22222222222222222222222222222222");
+    // }
+    //
+    // private async Task Test3()
+    // {
+    //     using var scope = _serviceProvider.CreateScope();
+    //     AppDbContext _db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //     var user = await _db.Users.FirstAsync(x => x.UserId == 5994965427);
+    //     user.IncreaseBalance(300);
+    //     user.SetSystemMessage("hello3");
+    //     await _db.SaveChangesAsync();
+    //     Console.WriteLine("33333333333333333333333333333333");
+    // }
 
     async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken ct)
     {

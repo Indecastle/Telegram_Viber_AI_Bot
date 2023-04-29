@@ -1,4 +1,5 @@
 using System.Text;
+using System.Transactions;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using MoreLinq.Extensions;
@@ -80,6 +81,11 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 cancellationToken: cancellationToken);
         }
 
+        // using var scopeTr = new TransactionScope(
+        //     TransactionScopeOption.RequiresNew,
+        //     new TransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead },
+        //     TransactionScopeAsyncFlowOption.Enabled);
+        
         if (user.SelectedMode == SelectedMode.Chat)
         {
             try
@@ -127,7 +133,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             // replyMarkup: new ReplyKeyboardRemove(),
             cancellationToken: cancellationToken);
         
-        var textResult = await _openAiService.ChatHandler(message.Text, storedUser);
+        var textResult = await _openAiService.ChatHandler(message.Text, storedUser, cancellationToken);
 
         if (string.IsNullOrEmpty(textResult))
             await _botClient.EditMessageTextAsync(
@@ -179,7 +185,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
 
         try
         {
-            await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser))
+            await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser, cancellationToken))
             {
                 if (waitMessage is null)
                 {

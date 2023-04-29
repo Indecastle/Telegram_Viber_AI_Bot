@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
-using Telegram_AI_Bot.Core.Ports.DataAccess.Viber;
 using Telegram_AI_Bot.Core.Services.Viber.OpenAi;
 using Telegram_AI_Bot.Core.Viber;
 using Viber.Bot.NetCore.Models;
@@ -17,9 +16,9 @@ public interface IViberTextReceivedService
 public class ViberTextReceivedService : IViberTextReceivedService
 {
     private readonly IViberBotApi _botClient;
+    private readonly IViberKeyboardService _keyboardService;
     private readonly ILogger<ViberTextReceivedService> _logger;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IViberKeyboardService _keyboardService;
     private readonly IViberOpenAiService _viberOpenAiService;
 
     public ViberTextReceivedService(
@@ -40,7 +39,7 @@ public class ViberTextReceivedService : IViberTextReceivedService
     {
         var sender = update.Sender;
         var message = update.Message as TextMessage;
-        
+
         _logger.LogInformation("Receive message type: {MessageType}", message.Type);
         if (message.Text is not { } messageText)
             return;
@@ -51,24 +50,24 @@ public class ViberTextReceivedService : IViberTextReceivedService
             "/help" => Usage(sender, message),
             _ => _viberOpenAiService.Handler(sender, message)
         };
-        
+
         await action;
         await _unitOfWork.CommitAsync();
         // _logger.LogInformation("The message was sent with token: {SentMessageId}", sentMessage.Content.MessageToken);
     }
-    
+
     private async Task Usage(ViberUser.User? sender, TextMessage message)
     {
         const string usage = "Write --help";
 
-        var newMessage = new TextMessage()
+        var newMessage = new TextMessage
         {
             //required
             Receiver = sender.Id,
-            Sender = new ViberUser.User()
+            Sender = new ViberUser.User
             {
                 //required
-                Name = "Chat bot",
+                Name = "Chat bot"
                 // Avatar = "https://i.imgur.com/K9SDD1X.png"
             },
             //required

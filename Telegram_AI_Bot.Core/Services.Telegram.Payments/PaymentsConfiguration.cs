@@ -9,4 +9,5 @@ public class PaymentsConfiguration
     public string? TonProviderToken { get; set; } = null;
     public (decimal Money, long Token)[] TonPriceTuples => CryptoPrices.Select(x => (x[0], (long)x[1])).ToArray();
     public decimal[][] CryptoPrices { get; set; } = null;
+    public string? CryptoApiUrl { get; set; } = null;
 }

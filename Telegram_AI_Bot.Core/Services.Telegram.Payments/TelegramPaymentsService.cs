@@ -51,7 +51,7 @@ public class TelegramPaymentsService : ITelegramPaymentsService
         _commonConfiguration = commonConfiguration.Value;
         _paymentsOptions = paymentsOptions.Value;
         _openAiOptions = openAiOptions.Value;
-        _cryptoTonClient = new(_paymentsOptions.TonProviderToken!);
+        _cryptoTonClient = new(_paymentsOptions.TonProviderToken!, apiUrl: _paymentsOptions.CryptoApiUrl);
     }
 
     public async Task Handler(long chatId, int messageId, string[] args, TelegramUser user,

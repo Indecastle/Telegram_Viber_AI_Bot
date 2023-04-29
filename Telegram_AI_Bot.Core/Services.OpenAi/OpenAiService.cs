@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -13,8 +14,8 @@ namespace Telegram_AI_Bot.Core.Services.OpenAi;
 
 public interface IOpenAiService
 {
-    Task<string> ChatHandler(string requestText, IOpenAiUser user);
-    IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user);
+    Task<string> ChatHandler(string requestText, IOpenAiUser user, CancellationToken cancellationToken);
+    IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user, CancellationToken cancellationToken);
     Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small);
     ChatRequest GetChatRequest(string requestText, IOpenAiUser user);
 }
@@ -40,7 +41,7 @@ public class OpenAiService : IOpenAiService
         _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, _openAiOptions.OrganizationId));
     }
 
-    public async Task<string> ChatHandler(string requestText, IOpenAiUser user)
+    public async Task<string> ChatHandler(string requestText, IOpenAiUser user, CancellationToken cancellationToken)
     {
         requestText = requestText.Trim();
         
@@ -53,7 +54,7 @@ public class OpenAiService : IOpenAiService
         int requestTokens = TikTokenGPT3Model.Encode(chatRequestJson).Count * factorRequest;
         CheckEnoughBalance(user, requestTokens, "");
         
-        var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest);
+        var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest, cancellationToken);
         var resultText = result.FirstChoice.Message.ToString().Trim();
         
         UserContextHandler(user, requestText, resultText);
@@ -62,7 +63,7 @@ public class OpenAiService : IOpenAiService
         return resultText;
     }
 
-    public async IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user)
+    public async IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         requestText = requestText.Trim();
 
@@ -77,7 +78,7 @@ public class OpenAiService : IOpenAiService
 
         try
         {
-            await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest))
+            await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest, cancellationToken))
             {
                 strBuilder.Append(result.FirstChoice);
                 yield return result;

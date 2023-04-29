@@ -43,7 +43,7 @@ internal class CheckPaidInvoices : BackgroundService
         _logger = logger;
         _dateTimeProvider = dateTimeProvider;
         _paymentsOptions = paymentsOptions.Value;
-        _cryptoTonClient = new(_paymentsOptions.TonProviderToken!);
+        _cryptoTonClient = new(_paymentsOptions.TonProviderToken!, apiUrl: _paymentsOptions.CryptoApiUrl);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
