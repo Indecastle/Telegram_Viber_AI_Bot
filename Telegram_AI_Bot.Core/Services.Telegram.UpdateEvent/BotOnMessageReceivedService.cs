@@ -197,7 +197,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
     {
         await _botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: _localizer.GetString("Balance", user.Balance),
+            text: _localizer.GetString("Balance", user.Balance.ToString("N0")),
             replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);

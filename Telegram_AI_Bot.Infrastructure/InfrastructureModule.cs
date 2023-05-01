@@ -39,6 +39,7 @@ public static class InfrastructureModule
         services.AddSingleton<IExchangeRates, ExchangeRates>();
         services.AddHostedService<ExchangeRatesService>();
         services.AddHostedService<CheckPaidInvoices>();
+        services.AddHostedService<StartProjectBackgroundService>();
 
 
         return services;

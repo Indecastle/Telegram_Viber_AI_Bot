@@ -101,4 +101,11 @@ internal class UserRepositoryAdapter : IUserRepository
             .Where(x => !x.IsTyping && userIds.Contains(x.UserId))
             .ToArrayAsync();
     }
+
+    public async Task<TelegramUser[]> GetAllTyping()
+    {
+        return await _dbContext.Users.AsQueryable()
+            .Where(x => x.IsTyping)
+            .ToArrayAsync();
+    }
 }

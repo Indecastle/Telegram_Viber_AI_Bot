@@ -184,19 +184,26 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             }
             
             user.SetChatModel(arg!);
-            await _unitOfWork.CommitAsync();
 
             if (args.Length == 2 && args[1] == "Begin")
             {
+                if (arg == ChatModel.Gpt35)
+                {
+                    user.SwitchEnablingContext(true);
+                    await _unitOfWork.CommitAsync();
+                }
+                
                 await _botClient.AnswerCallbackQueryAsync(
                     callbackQuery.Id,
-                    _localizer.GetString("YouChoseChatModelAlert", user.ChatModel!.Value),
+                    _localizer.GetString("YouChoseChatModelAlert_" + user.ChatModel!.Value),
                     showAlert: true,
                     cancellationToken: cancellationToken);
 
                 await KeyboardMainMenu(callbackQuery, args, cancellationToken);
                 return;
             }
+            
+            await _unitOfWork.CommitAsync();
         }
 
         await _botClient.EditMessageTextAsync(
@@ -225,7 +232,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         await _botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: _localizer.GetString("Balance", user.Balance),
+            text: _localizer.GetString("Balance", user.Balance.ToString("N0")),
             replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer),
             cancellationToken: cancellationToken);
     }

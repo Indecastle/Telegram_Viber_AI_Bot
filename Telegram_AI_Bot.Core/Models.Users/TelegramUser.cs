@@ -6,6 +6,7 @@ using Telegram.Bot.Types;
 using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram_AI_Bot.Core.Telegram;
 using TiktokenSharp;
 
 namespace Telegram_AI_Bot.Core.Models.Users;
@@ -103,14 +104,14 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
         SelectedMode = SelectedMode.NextMode;
     }
     
-    public void SwitchEnablingContext()
+    public void SwitchEnablingContext(bool? value = null)
     {
-        EnabledContext = !EnabledContext;
+        EnabledContext = value ?? !EnabledContext;
     }
     
     public void SwitchEnabledStreamingChat()
     {
-        EnabledStreamingChat = !EnabledStreamingChat;
+        EnabledStreamingChat = ChatModel == ChatModel.Gpt4 || !EnabledStreamingChat;
     }
     
     public static async Task<TelegramUser> NewClientAsync(
@@ -250,10 +251,11 @@ public class TelegramUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
             return false;
         
         var reduced = false;
-        while (OpenAiService.TikTokenGPT3Model.Encode(JsonConvert.SerializeObject(openAiService.GetChatRequest(messageText, this))).Count > 4000)
+        while (TelegramMessageHelper.GetNumTokensFromMessages(ChatModel,
+                   openAiService.GetChatRequest(messageText, this).Messages) > 4000)
         {
-            _messages.RemoveAt(0); 
-            _messages.RemoveAt(0); 
+            _messages.RemoveAt(0);
+            _messages.RemoveAt(0);
             reduced = true;
         }
 

@@ -7,8 +7,10 @@ using OpenAI.Chat;
 using OpenAI.Images;
 using OpenAI.Models;
 using Telegram_AI_Bot.Core.Models;
+using Telegram_AI_Bot.Core.Telegram;
 using TiktokenSharp;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
+using Role = OpenAI.Chat.Role;
 
 namespace Telegram_AI_Bot.Core.Services.OpenAi;
 
@@ -23,8 +25,8 @@ public interface IOpenAiService
 public class OpenAiService : IOpenAiService
 {
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
-    private static readonly ChatPrompt[] TemplateSystemChatPrompt3 = { new("system", "You are a helpful assistant.\nYou are Chat GPT-3.5 version") };
-    private static readonly ChatPrompt[] TemplateSystemChatPrompt4 = { new("system", "You are a helpful assistant.\nYou are Chat GPT-4 version") };
+    private static readonly Message[] TemplateSystemChatPrompt3 = { new(Role.System, "You are a helpful assistant.\nYou are Chat GPT-3.5 version") };
+    private static readonly Message[] TemplateSystemChatPrompt4 = { new(Role.System, "You are a helpful assistant.\nYou are Chat GPT-4 version") };
     public static readonly TikToken TikTokenGPT3Model = TikToken.EncodingForModel("gpt-3.5-turbo");
     private static readonly string[] _stops = {"user", "assistant"};
 
@@ -50,13 +52,12 @@ public class OpenAiService : IOpenAiService
 
         var chatRequest = GetChatRequest(requestText, user);
         
-        string chatRequestJson = JsonConvert.SerializeObject(chatRequest.Messages);
-        int requestTokens = TikTokenGPT3Model.Encode(chatRequestJson).Count * factorRequest;
+        var requestTokens = TelegramMessageHelper.GetNumTokensFromMessages(user.ChatModel!, chatRequest.Messages) * factorRequest;
         CheckEnoughBalance(user, requestTokens, "");
         
         var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest, cancellationToken);
         var resultText = result.FirstChoice.Message.ToString().Trim();
-        
+
         UserContextHandler(user, requestText, resultText);
         user.ReduceChatTokens(result.Usage.PromptTokens*factorRequest + result.Usage.CompletionTokens*factorResponse, _openAiOptions);
 
@@ -71,15 +72,17 @@ public class OpenAiService : IOpenAiService
 
         var strBuilder = new StringBuilder();
         
-        string chatRequestJson = JsonConvert.SerializeObject(chatRequest.Messages);
         var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
-        int requestTokens = TikTokenGPT3Model.Encode(chatRequestJson).Count * factorRequest;
+        int requestTokens = TelegramMessageHelper.GetNumTokensFromMessages(user.ChatModel!, chatRequest.Messages) * factorRequest;
         CheckEnoughBalance(user, requestTokens, "");
 
         try
         {
             await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest, cancellationToken))
             {
+                if (result.FirstChoice.FinishReason == "stop")
+                    yield break;
+
                 strBuilder.Append(result.FirstChoice);
                 yield return result;
                 CheckEnoughBalance(user, requestTokens, strBuilder.ToString());
@@ -88,7 +91,7 @@ public class OpenAiService : IOpenAiService
         finally
         {
             var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
-            int responseTokens = TikTokenGPT3Model.Encode(strBuilder.ToString()).Count * factorResponse;
+            int responseTokens = TelegramMessageHelper.TikTokenModel.Encode(strBuilder.ToString()).Count * factorResponse;
 
             UserContextHandler(user, requestText, strBuilder.ToString());
             user.ReduceChatTokens(requestTokens + responseTokens + 1, _openAiOptions);
@@ -106,10 +109,10 @@ public class OpenAiService : IOpenAiService
 
     public ChatRequest GetChatRequest(string requestText, IOpenAiUser user)
     {
-        var newPromptMessage = new ChatPrompt("user", requestText);
+        var newPromptMessage = new Message(Role.User, requestText);
 
-        IEnumerable<ChatPrompt> resultDialog = !string.IsNullOrWhiteSpace(user.SystemMessage)
-            ? new ChatPrompt[] { new("system", user.SystemMessage) }
+        IEnumerable<Message> resultDialog = !string.IsNullOrWhiteSpace(user.SystemMessage)
+            ? new Message[] { new(Role.System, user.SystemMessage) }
             : user.ChatModel == ChatModel.Gpt35
                 ? TemplateSystemChatPrompt3
                 : TemplateSystemChatPrompt4;
@@ -118,7 +121,7 @@ public class OpenAiService : IOpenAiService
             resultDialog = resultDialog.Concat(
                 user.Messages.OrderBy(x => x.CreatedAt).ThenByDescending(x => x.IsMe)
                     .TakeWhile(x => x.CreatedAt < _dateTimeProvider.UtcNow)
-                    .Select(x => new ChatPrompt(x.IsMe ? "user" : "assistant", x.Text)).ToArray());
+                    .Select(x => new Message(x.IsMe ? Role.User : Role.Assistant, x.Text)).ToArray());
 
         resultDialog = resultDialog.Concat(new[] { newPromptMessage });
 

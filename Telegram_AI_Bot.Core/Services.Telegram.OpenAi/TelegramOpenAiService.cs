@@ -181,7 +181,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
         var strBuilderTotal = new StringBuilder();
         var strBuilder = new StringBuilder();
         var strBuilderBuff = new StringBuilder();
-        Task delaier = Task.Delay(0);
+        Task delaier = Task.Delay(_streamDelayMilliseconds);
 
         try
         {
@@ -191,7 +191,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 {
                     waitMessage = await _botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
-                        text: ".",
+                        text: "...",
                         cancellationToken: cancellationToken);
                 }
             

@@ -292,7 +292,7 @@ public static class TelegramInlineMenus
         str.AppendLine(l.GetString("TonCoin.Title"));
         foreach (var (rub, token) in paymentsOptions.TonPriceTuples)
         {
-            str.AppendLine(l.GetString("TonCoin.Item", rub, token));
+            str.AppendLine(l.GetString("TonCoin.Item", rub, token.ToString("N0")));
         }
         
         return str.ToString();

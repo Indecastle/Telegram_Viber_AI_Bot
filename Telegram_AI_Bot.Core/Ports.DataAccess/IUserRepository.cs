@@ -14,4 +14,5 @@ public interface IUserRepository
     Task<TelegramUser[]> AllAsync(string[]? roles);
     Task<TelegramUser[]> GetAllWithLowBalance();
     Task<TelegramUser[]> GetAllByUserId(long[] userIds);
+    Task<TelegramUser[]> GetAllTyping();
 }

@@ -76,7 +76,7 @@ public class ViberKeyboardService : IViberKeyboardService
     {
         var storedUser = await _userRepository.ByUserIdAsync(sender.Id);
 
-        string text = _localizer.GetString("Balance", storedUser.Balance);
+        string text = _localizer.GetString("Balance", storedUser.Balance.ToString("N0"));
 
         var newMessage = ViberMessageHelper.GetDefaultKeyboardMessage(sender, text, ViberMessageHelper.GetDefaultKeyboard(new[]
         {
