@@ -26,7 +26,7 @@ public class ExchangeRates: IExchangeRates
     public decimal? Rate_Eth_Usd { get; set; }
     public decimal? Rate_Bnb_Usd { get; set; }
     
-    public decimal? GetPrice(Assets from, Assets to, decimal amount = 4)
+    public decimal? GetPrice(Assets from, Assets to, decimal amount)
     {
         return from switch
         {

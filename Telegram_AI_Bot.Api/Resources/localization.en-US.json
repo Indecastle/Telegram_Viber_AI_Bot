@@ -2,7 +2,7 @@
   "Welcome": "Welcome to our bot, where you can chat with ChatGPT, one of the most advanced language models available today! I'm ready to answer any of your questions, help solve difficulties or just talk about any topic. Write to me, and let's start our exciting journey into the world of artificial intelligence!",
   "MainMenu": "Main Menu",
   "BalanceTitle": "\uD83D\uDCB0 Balance",
-  "Balance": "Tokens left: {0}\n\nThe value of 1 token = 4 Latin letters or 1 non Latin letter.\n1 picture = 16 000 tokens\n\nWe remind you: GTP-4 is 15 times more expensive than GTP-3.",
+  "Balance": "Tokens left: {0}\n\nThe value of 1 token = 4 Latin letters or 1 non Latin letter.\n1 picture = 16 000 tokens\n\nIf you want to start a new dialog, clear the context in the settings. This will avoid unnecessary token consumption and improve the quality of the interaction.\n\nWe remind you: GTP-4 is 15 times more expensive than GTP-3.",
   "NoBalance": "Not enough resources.",
   "Settings": "⚙ Settings",
   "ReducedContext": "The total number of characters in your dialog exceeds 4096 tokens (It's all because of the GPT-3 limitation). That's why some messages in the dialog have been deleted.",
