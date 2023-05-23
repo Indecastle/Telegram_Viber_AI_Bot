@@ -187,17 +187,17 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
 
             if (args.Length == 2 && args[1] == "Begin")
             {
-                if (arg == ChatModel.Gpt35)
-                {
-                    user.SwitchEnablingContext(true);
-                    await _unitOfWork.CommitAsync();
-                }
+                user.SwitchEnablingContext(true);
+                await _unitOfWork.CommitAsync();
                 
-                await _botClient.AnswerCallbackQueryAsync(
-                    callbackQuery.Id,
-                    _localizer.GetString("YouChoseChatModelAlert_" + user.ChatModel!.Value),
-                    showAlert: true,
-                    cancellationToken: cancellationToken);
+                if (arg == ChatModel.Gpt4)
+                {
+                    await _botClient.AnswerCallbackQueryAsync(
+                        callbackQuery.Id,
+                        _localizer.GetString("YouChoseChatModelAlert_" + user.ChatModel!.Value),
+                        showAlert: true,
+                        cancellationToken: cancellationToken);
+                }
 
                 await KeyboardMainMenu(callbackQuery, args, cancellationToken);
                 return;
