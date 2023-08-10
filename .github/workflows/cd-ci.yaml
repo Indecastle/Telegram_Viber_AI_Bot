@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Check out mode
         uses: actions/checkout@v2
@@ -22,3 +22,36 @@ jobs:
 
       - name: Build App
         run: dotnet build -c Release --no-restore
+
+      - name: Run automated tests
+        run: dotnet test -c Release --no-build
+
+  deploy:
+    if: github.event_name != 'push'
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        dotnet-version: ["7.0.x"]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build App
+        run: dotnet build -c Release --no-restore
+
+      # We will output publish files to the folder we previously created
+      - name: Publish
+        run: dotnet publish -c Release -o /home/ubuntu/actions-runner/.run-apps/Telegram_AI_Bot.Api
+
+      - name: Restart the app
+        run: |
+          export XDG_RUNTIME_DIR=/run/user/$(id -u)
+          systemctl --user restart telegram_ai-app.service
