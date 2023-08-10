@@ -12,7 +12,8 @@ public class Program
         var builder = new ConfigurationBuilder()
             .SetBasePath(Path.Combine(AppContext.BaseDirectory))
             .AddJsonFile("appsettings.json", optional: false)
-            .AddJsonFile("appsettings.Personal.json", optional: true);
+            .AddJsonFile("appsettings.Personal.json", optional: true)
+            .AddEnvironmentVariables();
 
         var configuration = builder.Build();
 

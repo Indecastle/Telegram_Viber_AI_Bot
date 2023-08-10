@@ -1,4 +1,5 @@
 using System.Transactions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,14 +23,17 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ITelegramBotClient _botClient;
     private readonly ILogger _logger;
+    private IWebHostEnvironment _currentEnvironment{ get; set; } 
 
     internal PollingServiceBase(
         IServiceProvider serviceProvider,
         ITelegramBotClient botClient,
-        ILogger<PollingServiceBase<TReceiverService>> logger)
+        ILogger<PollingServiceBase<TReceiverService>> logger,
+        IWebHostEnvironment currentEnvironment)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _currentEnvironment = currentEnvironment;
         _botClient = botClient;
     }
 
@@ -67,7 +71,13 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
                 _botClient.StartReceiving(HandleUpdateAsync, PollingErrorHandler, receiverOptions, cts.Token);
 
                 _logger.LogWarning($"Start listening for @{me.Username}");
-                Console.ReadLine();
+                
+                if (_currentEnvironment.IsProduction())
+                    while (true)
+                        await Task.Delay(2000, cts.Token);
+                else
+                    Console.ReadLine();
+                
 
                 cts.Cancel();
             }
@@ -149,12 +159,11 @@ public abstract class PollingServiceBase<TReceiverService> : BackgroundService
                 IUpdateHandler updateHandler = scope.ServiceProvider.GetRequiredService<UpdateHandler>();
                 await updateHandler.HandleUpdateAsync(bot, update, ct);
             }
-#pragma warning disable CA1031
             catch (Exception ex)
             {
                 _logger.LogError($"Exception while handling {update.Type}: {ex}");
             }
-#pragma warning restore CA1031
+
         }, ct);
     }
 

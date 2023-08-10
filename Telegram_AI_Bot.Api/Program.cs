@@ -24,9 +24,9 @@ using Viber.Bot.NetCore.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 // builder.Services.AddControllers();
 
-builder.Configuration.AddJsonFile("appsettings.Personal.json", optional: true);
-// Add services to the container.
-
+builder.Configuration
+    .AddJsonFile("appsettings.Personal.json", optional: true)
+    .AddEnvironmentVariables();
 
 builder.Services.Configure<TelegramBotConfiguration>(
     builder.Configuration.GetSection(TelegramBotConfiguration.Configuration));

@@ -3,7 +3,8 @@ name: Continuous Integration and Deployment
 on:
   push:
     branches:
-      - main
+      - deploy
+  workflow_dispatch:
 
 jobs:
   build:
@@ -27,7 +28,8 @@ jobs:
         run: dotnet test -c Release --no-build
 
   deploy:
-    if: github.event_name != 'push'
+    needs: build
+    if: needs.build.result == 'success'
     runs-on: self-hosted
 
     strategy:
@@ -47,9 +49,12 @@ jobs:
       - name: Build App
         run: dotnet build -c Release --no-restore
 
+      - name: Apply Migrations
+        run: dotnet run --project ./Telegram_AI_Bot.Migrations/Telegram_AI_Bot.Migrations.csproj -- migrate
+
       # We will output publish files to the folder we previously created
       - name: Publish
-        run: dotnet publish -c Release -o /home/ubuntu/actions-runner/.run-apps/Telegram_AI_Bot.Api
+        run: dotnet publish ./Telegram_AI_Bot.Api/Telegram_AI_Bot.Api.csproj -c Release -o /home/ubuntu/actions-runner/.run-apps/Telegram_AI_Bot.Api
 
       - name: Restart the app
         run: |
