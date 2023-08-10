@@ -20,9 +20,13 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="appsettings.Personal.json">
+      <Content Remove="appsettings.Personal.json" />
+      <None Condition="Exists('appsettings.Personal.json')" Include="appsettings.Personal.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
       <Content Include="Resources\localization.en-US.json">
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
