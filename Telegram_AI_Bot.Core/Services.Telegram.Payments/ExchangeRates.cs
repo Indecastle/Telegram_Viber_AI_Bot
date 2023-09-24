@@ -7,8 +7,9 @@ public interface IExchangeRates
     decimal? Rate_Ton_Usd { get; }
     decimal? Rate_Usdt_Usd { get; }
     decimal? Rate_Usdc_Usd { get; }
-    decimal? Rate_Busd_Usd { get; }
-    decimal? Rate_BTC_Usd { get; }
+    decimal? Rate_Trx_Usd { get; set; }
+    decimal? Rate_Ltc_Usd { get; set; }
+    decimal? Rate_Btc_Usd { get; }
     decimal? Rate_Eth_Usd { get; }
     decimal? Rate_Bnb_Usd { get; }
 
@@ -21,8 +22,9 @@ public class ExchangeRates: IExchangeRates
     public decimal? Rate_Ton_Usd { get; set; }
     public decimal? Rate_Usdt_Usd { get; set; }
     public decimal? Rate_Usdc_Usd { get; set; }
-    public decimal? Rate_Busd_Usd { get; set; }
-    public decimal? Rate_BTC_Usd { get; set; }
+    public decimal? Rate_Trx_Usd { get; set; }
+    public decimal? Rate_Ltc_Usd { get; set; }
+    public decimal? Rate_Btc_Usd { get; set; }
     public decimal? Rate_Eth_Usd { get; set; }
     public decimal? Rate_Bnb_Usd { get; set; }
     
@@ -35,8 +37,9 @@ public class ExchangeRates: IExchangeRates
                 Assets.TON => amount / Rate_Ton_Usd,
                 Assets.USDT => amount / Rate_Usdt_Usd,
                 Assets.USDC => amount / Rate_Usdc_Usd,
-                Assets.BUSD => amount / Rate_Busd_Usd,
-                Assets.BTC => amount / Rate_BTC_Usd,
+                Assets.TRX => amount / Rate_Trx_Usd,
+                Assets.LTC => amount / Rate_Ltc_Usd,
+                Assets.BTC => amount / Rate_Btc_Usd,
                 Assets.ETH => amount / Rate_Eth_Usd,
                 Assets.BNB => amount / Rate_Bnb_Usd,
             }
