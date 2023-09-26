@@ -199,7 +199,7 @@ public static class TelegramInlineMenus
         var usdt = rates.GetPrice(Assets.USD, Assets.USDT, amount);
         var usdc = rates.GetPrice(Assets.USD, Assets.USDC, amount);
         var trx = rates.GetPrice(Assets.USD, Assets.TRX, amount);
-        // var ltc = rates.GetPrice(Assets.USD, Assets.LTC, amount);
+        var ltc = rates.GetPrice(Assets.USD, Assets.LTC, amount);
         var eth = rates.GetPrice(Assets.USD, Assets.ETH, amount);
         var bnb = rates.GetPrice(Assets.USD, Assets.BNB, amount);
         var btc = rates.GetPrice(Assets.USD, Assets.BTC, amount);
@@ -237,8 +237,8 @@ public static class TelegramInlineMenus
                 {
                     InlineKeyboardButton.WithCallbackData($"BTC ({rates.Round(btc.Value, 6)})",
                         TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.BTC.ToString(), index.ToString())),
-                    // InlineKeyboardButton.WithCallbackData($"LTC ({rates.Round(ltc.Value, 2)})",
-                    //     TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.LTC.ToString(), index.ToString())),
+                    InlineKeyboardButton.WithCallbackData($"LTC ({rates.Round(ltc.Value, 2)})",
+                        TelegramCommands.WithArgs(TelegramCommands.Keyboard.Payments, Assets.USD.ToString(), Assets.LTC.ToString(), index.ToString())),
                 },
                 BackPrev(localizer.GetString("Back"), TelegramCommands.Keyboard.Payments),
             });

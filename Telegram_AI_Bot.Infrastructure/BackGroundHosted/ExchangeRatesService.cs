@@ -79,7 +79,7 @@ public class ExchangeRatesService : BackgroundService
         _rates.Rate_Usdt_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.USDT && x.Target == Assets.USD)?.Rate;
         _rates.Rate_Usdc_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.USDC && x.Target == Assets.USD)?.Rate;
         _rates.Rate_Trx_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.TRX && x.Target == Assets.USD)?.Rate;
-        // _rates.Rate_Ltc_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.LTC && x.Target == Assets.USD)?.Rate;
+        _rates.Rate_Ltc_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.LTC && x.Target == Assets.USD)?.Rate;
         _rates.Rate_Btc_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BTC && x.Target == Assets.USD)?.Rate;
         _rates.Rate_Eth_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.ETH && x.Target == Assets.USD)?.Rate;
         _rates.Rate_Bnb_Usd = (decimal?)rates.FirstOrDefault(x => x.Source == Assets.BNB && x.Target == Assets.USD)?.Rate;
