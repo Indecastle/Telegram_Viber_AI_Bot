@@ -5,7 +5,7 @@ using Role = OpenAI.Chat.Role;
 
 namespace Telegram_AI_Bot.Tests;
 
-public class Tests
+public class TelegramMessageHelperTests
 {
     [SetUp]
     public void Setup()
