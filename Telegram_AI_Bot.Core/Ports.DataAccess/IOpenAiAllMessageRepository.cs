@@ -6,5 +6,6 @@ namespace Telegram_AI_Bot.Core.Ports.DataAccess;
 
 public interface IOpenAiAllMessageRepository
 {
+    Task AddAsync(OpenAiAllMessage message);
     Task AddRangeAsync(OpenAiAllMessage[] invoices);
 }

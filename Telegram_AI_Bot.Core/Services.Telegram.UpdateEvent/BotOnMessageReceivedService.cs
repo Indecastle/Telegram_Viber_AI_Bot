@@ -1,7 +1,10 @@
 using System.ComponentModel;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -10,6 +13,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
+using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
 using Telegram_AI_Bot.Core.Telegram;
 
@@ -18,6 +22,7 @@ namespace Telegram_AI_Bot.Core.Services.Telegram.UpdateEvent;
 public interface IBotOnMessageReceivedService
 {
     Task BotOnMessageReceived(Message message, bool isEditedMessage, CancellationToken cancellationToken);
+    Task BotOnPhotoReceived(Message message, CancellationToken cancellationToken);
 }
 
 public class BotOnMessageReceivedService : IBotOnMessageReceivedService
@@ -71,10 +76,22 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         var action = messageText switch
         {
             var x when x.StartsWith("/") => CommandHandler(message, user, cancellationToken),
-            _ => _telegramOpenAiService.Handler(message, user, cancellationToken)
+            _ => _telegramOpenAiService.MessageHandler(message, user, cancellationToken)
         };
         
         await action;
+    }
+
+    public async Task BotOnPhotoReceived(Message message, CancellationToken cancellationToken)
+    {
+        var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
+        TelegramMessageHelper.SetCulture(user.Language);
+        LogMessage(message, user);
+
+        if (user.IsTyping || user.ChatModel != ChatModel.Gpt4)
+            return;
+
+        await _telegramOpenAiService.PhotoHandler(message, user, cancellationToken);
     }
 
     private async Task WaitStateHandler(Message message, TelegramUser user, CancellationToken cancellationToken)

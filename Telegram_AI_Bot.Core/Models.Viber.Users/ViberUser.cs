@@ -3,6 +3,7 @@ using OpenAI.Images;
 using Telegram_AI_Bot.Core.Common;
 using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram.Bot.Types.Enums;
 
 namespace Telegram_AI_Bot.Core.Models.Viber.Users;
 
@@ -130,7 +131,7 @@ public class ViberUser : IEntity, IAggregatedRoot, IHasId, IOpenAiUser
 
     public void AddMessage(string text, bool isMe, DateTimeOffset time)
     {
-        _messages.Add(new OpenAiMessage(new Guid(), text, isMe, time));
+        _messages.Add(new OpenAiMessage(new Guid(), text, isMe, MessageType.Text, time));
     }
     
     public void RemoveUnnecessary()

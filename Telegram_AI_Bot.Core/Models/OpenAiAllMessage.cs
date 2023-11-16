@@ -1,5 +1,6 @@
 using MyTemplate.App.Core.Models.Types;
 using Telegram_AI_Bot.Core.Models.Types;
+using Telegram.Bot.Types.Enums;
 
 namespace Telegram_AI_Bot.Core.Models;
 
@@ -9,12 +10,13 @@ public class OpenAiAllMessage : ValueObject
     {
     }
 
-    public OpenAiAllMessage(Guid id, Guid userId, long telegramUserId, string text, bool isMe, DateTimeOffset createdAt)
+    public OpenAiAllMessage(Guid id, Guid userId, long telegramUserId, string text, MessageType type, bool isMe, DateTimeOffset createdAt)
     {
         Id = id;
         UserId = userId;
         TelegramUserId = telegramUserId;
         Text = text;
+        Type = type;
         IsMe = isMe;
         CreatedAt = createdAt;
     }
@@ -23,6 +25,7 @@ public class OpenAiAllMessage : ValueObject
     public Guid UserId { get; protected set; }
     public long TelegramUserId { get; protected set; }
     public string Text { get; protected set; }
+    public MessageType Type { get; protected set; }
     public bool IsMe { get; protected set; }
     public DateTimeOffset CreatedAt { get; protected set; }
 
@@ -31,6 +34,7 @@ public class OpenAiAllMessage : ValueObject
         yield return Id;
         yield return UserId;
         yield return Text;
+        yield return Type;
         yield return IsMe;
         yield return CreatedAt;
     }

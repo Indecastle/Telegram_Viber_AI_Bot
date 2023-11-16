@@ -124,13 +124,13 @@ public static class TelegramInlineMenus
 
         if (user.SelectedMode == SelectedMode.Chat)
         {
-            str.AppendLine(l.GetString("SettingsText.ChatModel") + user.ChatModel);
+            str.AppendLine(l.GetString("SettingsText.ChatModel") + l.GetString($"ChatModels.{user.ChatModel}"));
             // str.AppendLine(l.GetString("SettingsText.MaxContextTokens") + "1000");
             str.AppendLine(l.GetStringYesNo("SettingsText.EnabledContext", user.EnabledContext));
             if (user.EnabledContext)
             {
                 str.AppendLine(l.GetString("SettingsText.Context",
-                    user.Messages.Count / 2, Constants.MAX_STORED_MESSAGES / 2));
+                    user.Messages.Count(x => x.IsMe), Constants.MAX_STORED_MESSAGES / 2));
             }
             str.AppendLine(l.GetStringYesNo("SettingsText.EnabledStreamingChat", user.EnabledStreamingChat));
         }

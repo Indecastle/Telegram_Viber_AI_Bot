@@ -14,7 +14,7 @@ public sealed class ChatModel : EnumValue<string>
     }
 
     public static readonly ChatModel Gpt35 = new() { Value = "gpt-3.5-turbo" };
-    public static readonly ChatModel Gpt4 = new() { Value = "gpt-4" };
+    public static readonly ChatModel Gpt4 = new() { Value = "gpt-4-vision-preview" };
     
     public static HashSet<string> All { get; } = new()
     {

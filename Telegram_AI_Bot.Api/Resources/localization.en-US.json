@@ -2,7 +2,7 @@
   "Welcome": "Welcome to our bot, where you can chat with ChatGPT, one of the most advanced language models available today! I'm ready to answer any of your questions, help solve difficulties or just talk about any topic. Write to me, and let's start our exciting journey into the world of artificial intelligence!",
   "MainMenu": "Main Menu",
   "BalanceTitle": "\uD83D\uDCB0 Balance",
-  "Balance": "Tokens left: {0}\n\nThe value of 1 token = 4 Latin letters or 1 non Latin letter.\n1 picture = 16 000 tokens\n\nIf you want to start a new dialog, clear the context in the settings. This will avoid unnecessary token consumption and improve the quality of the interaction.\n\nWe remind you: GTP-4 is 15 times more expensive than GTP-3.",
+  "Balance": "Tokens left: {0}\n\nThe value of 1 token = 4 Latin letters or 1 non Latin letter.\n1 picture = 16 000 tokens\n\nIf you want to start a new dialog, clear the context in the settings. This will avoid unnecessary token consumption and improve the quality of the interaction.\n\nWe remind you: GTP-4 is 10 times more expensive than GTP-3.",
   "NoBalance": "Not enough resources.",
   "Settings": "⚙ Settings",
   "ReducedContext": "The total number of characters in your dialog exceeds 4096 tokens (It's all because of the GPT-3 limitation). That's why some messages in the dialog have been deleted.",
@@ -36,15 +36,15 @@
     "InvoiceDescription": "Buying {0} tokens",
     "YouHaveBoughtTokens": "You have bought tokens: {0}"
   },
-  "ChooseChatModelBegin": "Choose chat model.\nWarning: GPT4 Charges 15 times more tokens than GPT3.5",
-  "ChooseChatModel": "Choose chat model.\nWarning: GPT4 Charges 15 times more tokens than GPT3.5",
+  "ChooseChatModelBegin": "Choose chat model.\nWarning: GPT4 Charges 10 times more tokens than GPT3.5",
+  "ChooseChatModel": "Choose chat model.\nWarning: GPT4 Charges 10 times more tokens than GPT3.5",
   "YouChoseChatModel": "You have selected a model: <i><b>{0}</b></i>",
   "YouChoseChatModelAlert": "You have selected a model: {0}",
   "YouChoseChatModelAlert_gpt-3.5-turbo": "You have selected a model: gpt-3.5-turbo",
   "YouChoseChatModelAlert_gpt-4": "You have selected a model: gpt-4\n\nWe remind you: GTP-4 is more expensive than GTP-3.",
   "ChatModels": {
     "gpt-3.5-turbo": "GPT-3.5-turbo",
-    "gpt-4": "GPT-4"
+    "gpt-4-vision-preview": "GPT-4-turbo"
   },
   "HelpText": "If you have any questions or difficulties while using the bot, we are here to help you. You can contact us at any time by sending a message in this chat and we will try to answer your questions as soon as possible. You can also use different commands to control the bot and get more accurate answers to your requests. Thank you for choosing our bot!",
   "BackToMainMenu": "\uD83D\uDD19 Back to main menu",

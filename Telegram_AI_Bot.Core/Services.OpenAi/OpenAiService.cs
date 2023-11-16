@@ -8,6 +8,7 @@ using OpenAI.Images;
 using OpenAI.Models;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Telegram;
+using Telegram.Bot.Types.Enums;
 using TiktokenSharp;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
 using Role = OpenAI.Chat.Role;
@@ -25,8 +26,8 @@ public interface IOpenAiService
 public class OpenAiService : IOpenAiService
 {
     // The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, tells in great detail and very friendly
-    private static readonly Message[] TemplateSystemChatPrompt3 = { new(Role.System, "You are a helpful assistant.\nYou are Chat GPT-3.5 version") };
-    private static readonly Message[] TemplateSystemChatPrompt4 = { new(Role.System, "You are a helpful assistant.\nYou are Chat GPT-4 version") };
+    private static readonly Message[] TemplateSystemChatPrompt3 = { new(Role.System, "You are a helpful assistant.\nYou are Chat GPT-3.5-Turbo version") };
+    private static readonly Message[] TemplateSystemChatPrompt4 = { new(Role.System, "You are a helpful assistant.\nYou are Chat GPT-4-Turbo version") };
     public static readonly TikToken TikTokenGPT3Model = TikToken.EncodingForModel("gpt-3.5-turbo");
     private static readonly string[] _stops = {"user", "assistant"};
 
@@ -48,18 +49,19 @@ public class OpenAiService : IOpenAiService
         requestText = requestText.Trim();
         
         var factorRequest = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value : 1;
-        var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
+        var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*3 : 1;
 
         var chatRequest = GetChatRequest(requestText, user);
         
         var requestTokens = TelegramMessageHelper.GetNumTokensFromMessages(user.ChatModel!, chatRequest.Messages) * factorRequest;
+        requestTokens += TelegramMessageHelper.GetNumTokensFromPhotos(user.ChatModel!, chatRequest.Messages);
         CheckEnoughBalance(user, requestTokens, "");
         
         var result = await _api.ChatEndpoint.GetCompletionAsync(chatRequest, cancellationToken);
         var resultText = result.FirstChoice.Message.ToString().Trim();
 
         UserContextHandler(user, requestText, resultText);
-        user.ReduceChatTokens(result.Usage.PromptTokens*factorRequest + result.Usage.CompletionTokens*factorResponse, _openAiOptions);
+        user.ReduceChatTokens(result.Usage.PromptTokens.Value*factorRequest + result.Usage.CompletionTokens.Value*factorResponse, _openAiOptions);
 
         return resultText;
     }
@@ -80,7 +82,7 @@ public class OpenAiService : IOpenAiService
         {
             await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest, cancellationToken))
             {
-                if (result.FirstChoice.FinishReason == "stop")
+                if (result.FirstChoice.FinishReason == "stop" || result.FirstChoice.FinishDetails?.Type == "stop" || result.FirstChoice.FinishDetails?.Type == "max_tokens")
                     yield break;
 
                 strBuilder.Append(result.FirstChoice);
@@ -90,7 +92,7 @@ public class OpenAiService : IOpenAiService
         }
         finally
         {
-            var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*2 : 1;
+            var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value*3 : 2;
             int responseTokens = TelegramMessageHelper.TikTokenModel.Encode(strBuilder.ToString()).Count * factorResponse;
 
             UserContextHandler(user, requestText, strBuilder.ToString());
@@ -100,7 +102,7 @@ public class OpenAiService : IOpenAiService
 
     private void CheckEnoughBalance(IOpenAiUser user, int requestTokens, string responseText)
     {
-        var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value * 2 : 1;
+        var factorResponse = user.ChatModel == ChatModel.Gpt4 ? _openAiOptions.FactorTextGpt4.Value * 3 : 2;
         int responseTokens = TikTokenGPT3Model.Encode(responseText).Count * factorResponse;
 
         if (user.Balance < requestTokens + responseTokens)
@@ -121,11 +123,15 @@ public class OpenAiService : IOpenAiService
             resultDialog = resultDialog.Concat(
                 user.Messages.OrderBy(x => x.CreatedAt).ThenByDescending(x => x.IsMe)
                     .TakeWhile(x => x.CreatedAt < _dateTimeProvider.UtcNow)
-                    .Select(x => new Message(x.IsMe ? Role.User : Role.Assistant, x.Text)).ToArray());
+                    .Where(x => x.Type == MessageType.Text || user.ChatModel == ChatModel.Gpt4 )
+                    .Select(x => new Message(x.IsMe ? Role.User : Role.Assistant, new List<Content>
+                    {
+                        new Content(x.Type == MessageType.Photo ? ContentType.ImageUrl : ContentType.Text, x.Text),
+                    })).ToArray());
 
         resultDialog = resultDialog.Concat(new[] { newPromptMessage });
 
-        return new ChatRequest(resultDialog, model: user.ChatModel!.Value);
+        return new ChatRequest(resultDialog, model: user.ChatModel!.Value, maxTokens: user.ChatModel == ChatModel.Gpt4 ? 4000 : 2000);
     }
 
     public async Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small)

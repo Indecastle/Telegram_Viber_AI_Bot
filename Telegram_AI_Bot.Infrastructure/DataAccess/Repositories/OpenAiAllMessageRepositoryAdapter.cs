@@ -18,6 +18,11 @@ internal class OpenAiAllMessageRepositoryAdapter : IOpenAiAllMessageRepository
     {
         _dbContext = dbContext;
     }
+    
+    public async Task AddAsync(OpenAiAllMessage message)
+    {
+        await _dbContext.TelegramOpenAiAllMessages.AddAsync(message);
+    }
 
     public async Task AddRangeAsync(OpenAiAllMessage[] messages)
     {

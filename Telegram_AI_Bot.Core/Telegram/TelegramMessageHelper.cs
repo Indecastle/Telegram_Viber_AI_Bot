@@ -4,6 +4,8 @@ using Microsoft.Extensions.Localization;
 using OpenAI.Chat;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
+using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram.Bot.Types.Enums;
 using TiktokenSharp;
 
 namespace Telegram_AI_Bot.Core.Telegram;
@@ -61,11 +63,37 @@ public static class TelegramMessageHelper
         var tokensPerMessage = model == ChatModel.Gpt35 ? 4 : 3; // every message follows <|start|>{role/name}\n{content}<|end|>\n
         
         var numTokens = messages.Aggregate(0, (num, promt) =>
-            num + TikTokenModel.Encode(promt.Role.ToString()).Count + TikTokenModel.Encode(promt.Content).Count);
+        {
+            var content = promt.Content is string ? (string)promt.Content : (string)(promt.Content[0].ImageUrl?.Url ?? promt.Content[0].Text);
+            return num + TikTokenModel.Encode(promt.Role.ToString()).Count + TikTokenModel.Encode(content).Count;
+        });
         
         numTokens += tokensPerMessage * messages.Count;
         numTokens += 3; // every reply is primed with <|start|>assistant<|message|>
 
         return numTokens;
+    }
+    
+    public static int GetNumTokensFromPhotos(ChatModel model, IReadOnlyCollection<Message> messages)
+    {
+        if (model != ChatModel.Gpt4)
+            return 0;
+
+        var numTokens = messages
+            .Select(x => x.Content as List<Content>)
+            .Count(x => x.Count > 0 && x[0].Type == ContentType.ImageUrl) * 15;
+        
+        numTokens *= CountVisionPhotoTokens(512, 512);
+
+        return numTokens;
+    }
+
+    public static int CountVisionPhotoTokens(double width, double height)
+    {
+        int h = (int)Math.Ceiling(height / 512);
+        int w = (int)Math.Ceiling(width / 512);
+        int n = w * h;
+        int total = 85 + 170 * n;
+        return total;
     }
 }

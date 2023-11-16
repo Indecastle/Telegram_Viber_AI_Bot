@@ -43,6 +43,7 @@ public class UpdateHandler : IUpdateHandler
         {
             { ChatJoinRequest: { } chatJoinRequest }                       => throw new NotImplementedException(),
             // { Message: { Type: MessageType.SuccessfulPayment } SuccessPaymentMessage }                       => _botOnMessageReceivedService.BotOnMessageReceived(message, cancellationToken),
+            { Message: { Type: MessageType.Photo } message }                       => _botOnMessageReceivedService.BotOnPhotoReceived(message, cancellationToken),
             { Message: { } message }                       => _botOnMessageReceivedService.BotOnMessageReceived(message, false, cancellationToken),
             { EditedMessage: { } message }                 => _botOnMessageReceivedService.BotOnMessageReceived(message, true, cancellationToken),
             { CallbackQuery: { } callbackQuery }           => _botOnCallbackQueryService.Handler(callbackQuery, cancellationToken),
@@ -53,7 +54,7 @@ public class UpdateHandler : IUpdateHandler
             _                                              => UnknownUpdateHandlerAsync(update, cancellationToken)
         };
 
-        await handler;
+        await handler;  
     }
 
     private async Task BotShippingHandlerAsync(ShippingQuery shippingQuery, CancellationToken cancellationToken)
