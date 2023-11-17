@@ -41,9 +41,9 @@
   "YouChoseChatModel": "You have selected a model: <i><b>{0}</b></i>",
   "YouChoseChatModelAlert": "You have selected a model: {0}",
   "YouChoseChatModelAlert_gpt-3.5-turbo": "You have selected a model: gpt-3.5-turbo",
-  "YouChoseChatModelAlert_gpt-4": "You have selected a model: gpt-4\n\nWe remind you: GTP-4 is more expensive than GTP-3.",
+  "YouChoseChatModelAlert_gpt-4-vision-preview": "You have selected a model: gpt-4\n\nWe remind you: GTP-4 is more expensive than GTP-3.",
   "ChatModels": {
-    "gpt-3.5-turbo": "GPT-3.5-turbo",
+    "gpt-3.5-turbo-1106": "GPT-3.5-turbo",
     "gpt-4-vision-preview": "GPT-4-turbo"
   },
   "HelpText": "If you have any questions or difficulties while using the bot, we are here to help you. You can contact us at any time by sending a message in this chat and we will try to answer your questions as soon as possible. You can also use different commands to control the bot and get more accurate answers to your requests. Thank you for choosing our bot!",
