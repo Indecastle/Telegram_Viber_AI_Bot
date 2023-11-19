@@ -1,19 +1,13 @@
-using System.ComponentModel;
-using System.Net.Http.Headers;
-using System.Text.Json;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.Payments;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
-using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
 using Telegram_AI_Bot.Core.Telegram;
 
@@ -25,33 +19,19 @@ public interface IBotOnMessageReceivedService
     Task BotOnPhotoReceived(Message message, CancellationToken cancellationToken);
 }
 
-public class BotOnMessageReceivedService : IBotOnMessageReceivedService
-{
-    private readonly ITelegramBotClient _botClient;
-    private readonly ILogger<BotOnMessageReceivedService> _logger;
-    private readonly IUserRepository _userRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ITelegramOpenAiService _telegramOpenAiService;
-    private readonly IJsonStringLocalizer _localizer;
-
-    public BotOnMessageReceivedService(
+public class BotOnMessageReceivedService(
         ITelegramBotClient botClient,
         ILogger<BotOnMessageReceivedService> logger,
         IUserRepository userRepository,
         IUnitOfWork unitOfWork,
-        ITelegramOpenAiService telegramOpenAiService, IJsonStringLocalizer localizer)
-    {
-        _botClient = botClient;
-        _logger = logger;
-        _userRepository = userRepository;
-        _unitOfWork = unitOfWork;
-        _telegramOpenAiService = telegramOpenAiService;
-        _localizer = localizer;
-    }
-
+        ITelegramOpenAiService telegramOpenAiService,
+        IJsonStringLocalizer localizer,
+        IBotOnMessageWaitingService messageWaitingService)
+    : IBotOnMessageReceivedService
+{
     public async Task BotOnMessageReceived(Message message, bool isEditedMessage, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
+        var user = await userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
         TelegramMessageHelper.SetCulture(user.Language);
         LogMessage(message, user);
 
@@ -60,7 +40,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         
         if (!isEditedMessage && user.WaitState != null)
         {
-            await WaitStateHandler(message, user, cancellationToken);
+            await messageWaitingService.WaitStateHandler(message, user, cancellationToken);
             return;
         }
 
@@ -76,7 +56,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         var action = messageText switch
         {
             var x when x.StartsWith("/") => CommandHandler(message, user, cancellationToken),
-            _ => _telegramOpenAiService.MessageHandler(message, user, cancellationToken)
+            _ => telegramOpenAiService.MessageHandler(message, user, cancellationToken)
         };
         
         await action;
@@ -84,63 +64,27 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
 
     public async Task BotOnPhotoReceived(Message message, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
+        var user = await userRepository.GetOrCreateIfNotExistsAsync(message.From ?? throw new ArgumentNullException());
         TelegramMessageHelper.SetCulture(user.Language);
         LogMessage(message, user);
 
         if (user.IsTyping || user.ChatModel != ChatModel.Gpt4)
             return;
 
-        await _telegramOpenAiService.PhotoHandler(message, user, cancellationToken);
+        await telegramOpenAiService.PhotoHandler(message, user, cancellationToken);
     }
 
-    private async Task WaitStateHandler(Message message, TelegramUser user, CancellationToken cancellationToken)
-    {
-        var action = user.WaitState switch
-        {
-            var x when x == WaitState.SystemMessage => ChangeSystemMessage(message, user, cancellationToken),
-            _ => ResetWaitState(message, user, cancellationToken)
-        };
-        
-        await action;
-    }
-
-    private async Task ChangeSystemMessage(Message message, TelegramUser user, CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(message.Text) || message.Text.StartsWith("/"))
-        {
-            await _botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
-                text: _localizer.GetString("SystemMessageMenu.InvalidateChange"),
-                cancellationToken: cancellationToken);
-            return;
-        }
-        user.SetSystemMessage(message.Text);
-        user.ResetWaitState();
-        await _unitOfWork.CommitAsync();
-        await _botClient.SendTextMessageAsync(
-            chatId: message.Chat.Id,
-            text: _localizer.GetString("SystemMessageMenu.HasBeenChanged"),
-            replyMarkup: TelegramInlineMenus.BackPrevMenu(_localizer,
-                TelegramCommands.Keyboard.Settings_SystemMessage),
-            cancellationToken: cancellationToken);
-    }
     
-    private async Task ResetWaitState(Message message, TelegramUser user, CancellationToken cancellationToken)
-    {
-        user.ResetWaitState();
-        await _unitOfWork.CommitAsync();
-    }
 
     private void LogMessage(Message message, TelegramUser user)
     {
         switch (message.Type)
         {
             case MessageType.Text:
-                _logger.LogInformation("Receive message from user: {UserName} | with text: {Text}", message.From!.Username ?? message.From.FirstName, message.Text);
+                logger.LogInformation("Receive message from user: {UserName} | with text: {Text}", message.From!.Username ?? message.From.FirstName, message.Text);
                 break;
             default:
-                _logger.LogInformation("Receive message type: {Type}, from user: {UserName}", message.Type, message.From!.Username ?? message.From.FirstName);
+                logger.LogInformation("Receive message type: {Type}, from user: {UserName}", message.Type, message.From!.Username ?? message.From.FirstName);
                 break;
         }
     }
@@ -159,7 +103,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
         if (!TelegramCommands.All.Contains(command.ToLowerInvariant()))
             return;
         
-        await _botClient.SendChatActionAsync(
+        await botClient.SendChatActionAsync(
             chatId: message.Chat.Id,
             chatAction: ChatAction.Typing,
             cancellationToken: cancellationToken);
@@ -175,16 +119,16 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
 
         await action;
         
-        await _unitOfWork.CommitAsync();
+        await unitOfWork.CommitAsync();
     }
 
     private async Task StartCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(user.ChatModel))
-            await _botClient.SendTextMessageAsync(
+            await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: _localizer.GetString("ChooseChatModelBegin"),
-                replyMarkup: TelegramInlineMenus.SetChatModelBegin(_localizer, user),
+                text: localizer.GetString("ChooseChatModelBegin"),
+                replyMarkup: TelegramInlineMenus.SetChatModelBegin(localizer, user),
                 cancellationToken: cancellationToken);
         else
             await MainMenuCommand(message, args, user, cancellationToken);
@@ -192,39 +136,39 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
     
     private async Task MainMenuCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
     {
-        await _botClient.SendTextMessageAsync(
+        await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: _localizer.GetString("MainMenu"),
-            replyMarkup: TelegramInlineMenus.MainMenu(_localizer),
+            text: localizer.GetString("MainMenu"),
+            replyMarkup: TelegramInlineMenus.MainMenu(localizer),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
 
     private async Task SettingsCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
     {
-        await _botClient.SendTextMessageAsync(
+        await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: TelegramInlineMenus.GetSettingsText(_localizer, user),
-            replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer, user),
+            text: TelegramInlineMenus.GetSettingsText(localizer, user),
+            replyMarkup: TelegramInlineMenus.SettingsMenu(localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
     
     private async Task BalanceCommand(Message message, string[] args, TelegramUser user, CancellationToken cancellationToken)
     {
-        await _botClient.SendTextMessageAsync(
+        await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: _localizer.GetString("Balance", user.Balance.ToString("N0")),
-            replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer),
+            text: localizer.GetString("Balance", user.Balance.ToString("N0")),
+            replyMarkup: TelegramInlineMenus.BalanceMenu(localizer),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
     
     private async Task HelpCommand(Message message, string[] args, CancellationToken cancellationToken)
     {
-        await _botClient.SendTextMessageAsync(
+        await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: _localizer.GetString("HelpText"),
+            text: localizer.GetString("HelpText"),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
@@ -363,7 +307,7 @@ public class BotOnMessageReceivedService : IBotOnMessageReceivedService
                              "/request     - request location or contact\n" +
                              "/inline_mode - send keyboard with Inline Query";
 
-        return await _botClient.SendTextMessageAsync(
+        return await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
             text: usage,
             replyMarkup: new ReplyKeyboardRemove(),

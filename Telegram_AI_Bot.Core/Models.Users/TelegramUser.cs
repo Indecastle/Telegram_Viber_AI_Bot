@@ -1,6 +1,4 @@
 ﻿using MyTemplate.App.Core.Models.Types;
-using Newtonsoft.Json;
-using OpenAI.Chat;
 using OpenAI.Images;
 using Telegram.Bot.Types;
 using Telegram_AI_Bot.Core.Common;
@@ -8,7 +6,6 @@ using Telegram_AI_Bot.Core.Models.Types;
 using Telegram_AI_Bot.Core.Services.OpenAi;
 using Telegram_AI_Bot.Core.Telegram;
 using Telegram.Bot.Types.Enums;
-using TiktokenSharp;
 
 namespace Telegram_AI_Bot.Core.Models.Users;
 

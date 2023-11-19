@@ -18,7 +18,8 @@ public static class CoreModule
             .AddScoped<IBotOnMessageReceivedService, BotOnMessageReceivedService>()
             .AddScoped<ITelegramOpenAiService, TelegramOpenAiService>()
             .AddScoped<ITelegramPaymentsService, TelegramPaymentsService>()
-            .AddScoped<IBotOnCallbackQueryService, BotOnCallbackQueryService>();
+            .AddScoped<IBotOnCallbackQueryService, BotOnCallbackQueryService>()
+            .AddScoped<IBotOnMessageWaitingService, BotOnMessageWaitingService>();
 
         services
             .AddScoped<IOpenAiService, OpenAiService>();

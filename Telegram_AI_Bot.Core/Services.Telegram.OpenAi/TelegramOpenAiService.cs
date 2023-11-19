@@ -1,13 +1,10 @@
 using System.Net.Http.Headers;
 using System.Text;
-using System.Transactions;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MoreLinq.Extensions;
 using Newtonsoft.Json;
-using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Jpeg;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -25,68 +22,50 @@ public interface ITelegramOpenAiService
     Task PhotoHandler(Message? message, TelegramUser user, CancellationToken cancellationToken);
 }
 
-public class TelegramOpenAiService : ITelegramOpenAiService
-{
-    private readonly ITelegramBotClient _botClient;
-    private readonly IUserRepository _userRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IOpenAiService _openAiService;
-    private readonly IJsonStringLocalizer _localizer;
-    private readonly IOpenAiAllMessageRepository _allMessageRepository;
-    private readonly OpenAiConfiguration _openAiOptions;
-
-    private static readonly int _streamDelayMilliseconds = 3000;
-
-    public TelegramOpenAiService(
-        ITelegramBotClient botClient,
-        IUserRepository userRepository,
+public class TelegramOpenAiService(ITelegramBotClient botClient,
         IUnitOfWork unitOfWork,
         IOpenAiService openAiService,
         IJsonStringLocalizer localizer,
         IOpenAiAllMessageRepository allMessageRepository,
         IOptions<OpenAiConfiguration> openAiOptions)
-    {
-        _botClient = botClient;
-        _userRepository = userRepository;
-        _unitOfWork = unitOfWork;
-        _openAiService = openAiService;
-        _localizer = localizer;
-        _allMessageRepository = allMessageRepository;
-        _openAiOptions = openAiOptions.Value;
-    }
+    : ITelegramOpenAiService
+{
+    private readonly OpenAiConfiguration _openAiOptions = openAiOptions.Value;
+
+    private static readonly int _streamDelayMilliseconds = 3000;
 
     public async Task MessageHandler(Message? message, TelegramUser user, CancellationToken cancellationToken)
     {
-        await _botClient.SendChatActionAsync(
+        await botClient.SendChatActionAsync(
             chatId: message.Chat.Id,
             chatAction: ChatAction.Typing,
             cancellationToken: cancellationToken);
 
         if (string.IsNullOrWhiteSpace(user.ChatModel))
         {
-            await _botClient.SendTextMessageAsync(
+            await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: _localizer.GetString("ChooseChatModelBegin"),
-                replyMarkup: TelegramInlineMenus.SetChatModelBegin(_localizer, user),
+                text: localizer.GetString("ChooseChatModelBegin"),
+                replyMarkup: TelegramInlineMenus.SetChatModelBegin(localizer, user),
                 cancellationToken: cancellationToken);
             return;
         }
         
         if (!user.IsPositiveBalance())
         {
-            await _botClient.SendTextMessageAsync(
+            await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: _localizer.GetString("NoBalance"),
-                replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer, false),
+                text: localizer.GetString("NoBalance"),
+                replyMarkup: TelegramInlineMenus.BalanceMenu(localizer, false),
                 cancellationToken: cancellationToken);
             return;
         }
 
-        if (user.ReduceContextIfNeed(message.Text, _openAiService))
+        if (user.ReduceContextIfNeed(message.Text, openAiService))
         {
-            await _botClient.SendTextMessageAsync(
+            await botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: _localizer.GetString("ReducedContext"),
+                text: localizer.GetString("ReducedContext"),
                 cancellationToken: cancellationToken);
         }
 
@@ -100,7 +79,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             try
             {
                 user.SetTyping(true);
-                await _unitOfWork.CommitAsync();
+                await unitOfWork.CommitAsync();
                 
                 if (user.IsEnabledStreamingChat())
                     await SendGradually(message, user, cancellationToken);
@@ -110,24 +89,24 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             catch (NoEnoughBalance e)
             {
                 if (e.IsOnlyOverRequest)
-                    await _botClient.SendTextMessageAsync(
+                    await botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
-                        text: _localizer.GetString("NoBalance"),
-                        replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer, false),
+                        text: localizer.GetString("NoBalance"),
+                        replyMarkup: TelegramInlineMenus.BalanceMenu(localizer, false),
                         cancellationToken: cancellationToken);
             }
             finally
             {
                 user.SetTyping(false);
-                await _unitOfWork.CommitAsync();
+                await unitOfWork.CommitAsync();
             }
             
         }
         else
         {
-            var url = await _openAiService.ImageHandler(message.Text, user);
+            var url = await openAiService.ImageHandler(message.Text, user);
 
-            await _botClient.SendPhotoAsync(
+            await botClient.SendPhotoAsync(
                 chatId: message.Chat.Id,
                 photo: new InputFileUrl(url),
                 cancellationToken: cancellationToken);
@@ -136,9 +115,9 @@ public class TelegramOpenAiService : ITelegramOpenAiService
 
     public async Task PhotoHandler(Message? message, TelegramUser user, CancellationToken cancellationToken)
     {
-        var file = await _botClient.GetFileAsync(message.Photo[^1].FileId, cancellationToken: cancellationToken);
+        var file = await botClient.GetFileAsync(message.Photo[^1].FileId, cancellationToken: cancellationToken);
         using var stream = new MemoryStream((int)file.FileSize);
-        await _botClient.DownloadFileAsync(file.FilePath, stream, cancellationToken);
+        await botClient.DownloadFileAsync(file.FilePath, stream, cancellationToken);
 
         await ResizeImage(stream, cancellationToken);
 
@@ -153,8 +132,8 @@ public class TelegramOpenAiService : ITelegramOpenAiService
         string link = result!.data.link;
         
         user.AddPhoto(link, DateTimeOffset.UtcNow);
-        await _allMessageRepository.AddAsync(new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, link, MessageType.Photo, true, DateTimeOffset.UtcNow));
-        await _unitOfWork.CommitAsync();
+        await allMessageRepository.AddAsync(new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, link, MessageType.Photo, true, DateTimeOffset.UtcNow));
+        await unitOfWork.CommitAsync();
     }
     
     private static async Task ResizeImage(MemoryStream stream, CancellationToken cancellationToken)
@@ -169,22 +148,22 @@ public class TelegramOpenAiService : ITelegramOpenAiService
 
     private async Task SendImmediately(Message message, TelegramUser storedUser, CancellationToken cancellationToken)
     {
-        var waitMessage = await _botClient.SendTextMessageAsync(
+        var waitMessage = await botClient.SendTextMessageAsync(
             chatId: message.Chat.Id,
-            text: _localizer.GetString("Wait"),
+            text: localizer.GetString("Wait"),
             // replyMarkup: new ReplyKeyboardRemove(),
             cancellationToken: cancellationToken);
         
-        var textResult = await _openAiService.ChatHandler(message.Text, storedUser, cancellationToken);
+        var textResult = await openAiService.ChatHandler(message.Text, storedUser, cancellationToken);
 
         if (string.IsNullOrEmpty(textResult))
-            await _botClient.EditMessageTextAsync(
+            await botClient.EditMessageTextAsync(
                 chatId: message.Chat.Id,
                 messageId: waitMessage.MessageId,
                 text: "bad request",
                 cancellationToken: cancellationToken);
         else
-            await _unitOfWork.CommitAsync();
+            await unitOfWork.CommitAsync();
         
         await SendTextMessage(message, waitMessage.MessageId, textResult, cancellationToken);
         await SaveMessage(storedUser, message.Text, textResult);
@@ -201,13 +180,13 @@ public class TelegramOpenAiService : ITelegramOpenAiService
             var text = chunks[i];
                 
             if (i == 0)
-                await _botClient.EditMessageTextAsync(
+                await botClient.EditMessageTextAsync(
                     chatId: message.Chat.Id,
                     messageId: waitMessageId,
                     text: text,
                     cancellationToken: cancellationToken);
             else
-                await _botClient.SendTextMessageAsync(
+                await botClient.SendTextMessageAsync(
                     chatId: message.Chat.Id,
                     text: text,
                     cancellationToken: cancellationToken);
@@ -227,11 +206,11 @@ public class TelegramOpenAiService : ITelegramOpenAiService
 
         try
         {
-            await foreach (var result in _openAiService.GetStreamingChat(message.Text!, storedUser, cancellationToken))
+            await foreach (var result in openAiService.GetStreamingChat(message.Text!, storedUser, cancellationToken))
             {
                 if (waitMessage is null)
                 {
-                    waitMessage = await _botClient.SendTextMessageAsync(
+                    waitMessage = await botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
                         text: "...",
                         cancellationToken: cancellationToken);
@@ -258,7 +237,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
                 {
                     strBuilder.Clear();
                     strBuilder.Append(strBuilderBuff);
-                    waitMessage = await _botClient.SendTextMessageAsync(
+                    waitMessage = await botClient.SendTextMessageAsync(
                         chatId: message.Chat.Id,
                         text: result.FirstChoice,
                         cancellationToken: cancellationToken);
@@ -281,7 +260,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     
     private async Task SaveMessage(TelegramUser user, string messageText, string textResult)
     {
-        await _allMessageRepository.AddRangeAsync(new[]
+        await allMessageRepository.AddRangeAsync(new[]
         {
             new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, messageText, MessageType.Text, true, DateTimeOffset.UtcNow),
             new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, textResult, MessageType.Text, false, DateTimeOffset.UtcNow),
@@ -292,7 +271,7 @@ public class TelegramOpenAiService : ITelegramOpenAiService
     {
         if (!canEdit) return;
         
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: chatId,
             messageId: waitMessage.MessageId,
             text: responseText,

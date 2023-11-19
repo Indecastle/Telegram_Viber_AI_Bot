@@ -18,18 +18,7 @@ public interface IBotOnCallbackQueryService
     Task Handler(CallbackQuery? callbackQuery, CancellationToken cancellationToken);
 }
 
-public class BotOnCallbackQueryService : IBotOnCallbackQueryService
-{
-    private readonly ITelegramBotClient _botClient;
-    private readonly ILogger<BotOnCallbackQueryService> _logger;
-    private readonly IUserRepository _userRepository;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IJsonStringLocalizer _localizer;
-    private readonly ITelegramPaymentsService _paymentsService;
-    private readonly PaymentsConfiguration _paymentsOptions;
-    private readonly IExchangeRates _rates;
-
-    public BotOnCallbackQueryService(
+public class BotOnCallbackQueryService(
         ITelegramBotClient botClient,
         ILogger<BotOnCallbackQueryService> logger,
         IUserRepository userRepository,
@@ -38,23 +27,16 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         ITelegramPaymentsService paymentsService,
         IOptions<PaymentsConfiguration> paymentsOptions,
         IExchangeRates rates)
-    {
-        _botClient = botClient;
-        _logger = logger;
-        _userRepository = userRepository;
-        _unitOfWork = unitOfWork;
-        _localizer = localizer;
-        _paymentsService = paymentsService;
-        _rates = rates;
-        _paymentsOptions = paymentsOptions.Value;
-    }
+    : IBotOnCallbackQueryService
+{
+    private readonly PaymentsConfiguration _paymentsOptions = paymentsOptions.Value;
 
     public async Task Handler(CallbackQuery? callbackQuery, CancellationToken cancellationToken)
     {
         if (callbackQuery?.Data == null)
             return;
 
-        var user = await _userRepository.GetOrCreateIfNotExistsAsync(callbackQuery.From);
+        var user = await userRepository.GetOrCreateIfNotExistsAsync(callbackQuery.From);
         TelegramMessageHelper.SetCulture(user.Language);
         
         // if (user.IsTyping)
@@ -81,7 +63,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         if (!TelegramCommands.Keyboard.All.Contains(command))
             return;
 
-        var user = await _userRepository.ByUserIdAsync(callbackQuery.From.Id);
+        var user = await userRepository.ByUserIdAsync(callbackQuery.From.Id);
 
         var action = command switch
         {
@@ -107,34 +89,34 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             if (command == "Reset")
             {
                 user.ResetSystemMessage();
-                await _botClient.EditMessageTextAsync(
+                await botClient.EditMessageTextAsync(
                     chatId: callbackQuery.Message!.Chat.Id,
                     messageId: callbackQuery.Message.MessageId,
-                    text: _localizer.GetString("SystemMessageMenu.ResetTitle"),
-                    replyMarkup: TelegramInlineMenus.BackPrevMenu(_localizer,
+                    text: localizer.GetString("SystemMessageMenu.ResetTitle"),
+                    replyMarkup: TelegramInlineMenus.BackPrevMenu(localizer,
                         TelegramCommands.Keyboard.Settings_SystemMessage),
                     cancellationToken: cancellationToken);
             }
             if (command == "Change")
             {
                 user.SetWaitState(WaitState.SystemMessage);
-                await _botClient.SendTextMessageAsync(
+                await botClient.SendTextMessageAsync(
                     chatId: callbackQuery.Message!.Chat.Id,
-                    text: _localizer.GetString("SystemMessageMenu.ChangeSystemMessage"),
+                    text: localizer.GetString("SystemMessageMenu.ChangeSystemMessage"),
                     cancellationToken: cancellationToken);
             }
             
-            await _unitOfWork.CommitAsync();
+            await unitOfWork.CommitAsync();
             return;
         }
 
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
             text: user.SystemMessage != null
-                ? _localizer.GetString("SystemMessageMenu.Title", user.SystemMessage)
-                : _localizer.GetString("SystemMessageMenu.TitleDefault"),
-            replyMarkup: TelegramInlineMenus.SystemMessageMenu(_localizer, user),
+                ? localizer.GetString("SystemMessageMenu.Title", user.SystemMessage)
+                : localizer.GetString("SystemMessageMenu.TitleDefault"),
+            replyMarkup: TelegramInlineMenus.SystemMessageMenu(localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
@@ -143,14 +125,14 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     {
         if (args.Length == 1)
         {
-            if (!_rates.Rate_Ton_Usd.HasValue)
+            if (!rates.Rate_Ton_Usd.HasValue)
                 return;
 
-            await _botClient.EditMessageTextAsync(
+            await botClient.EditMessageTextAsync(
                 chatId: callbackQuery.Message!.Chat.Id,
                 messageId: callbackQuery.Message.MessageId,
-                text: _localizer.GetString("TonCoin.ChooseCurrency"),
-                replyMarkup: TelegramInlineMenus.Payments(_localizer, user, _paymentsOptions, _rates, int.Parse(args[0])),
+                text: localizer.GetString("TonCoin.ChooseCurrency"),
+                replyMarkup: TelegramInlineMenus.Payments(localizer, user, _paymentsOptions, rates, int.Parse(args[0])),
                 parseMode: ParseMode.Html,
                 cancellationToken: cancellationToken);
             return;
@@ -158,16 +140,16 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         
         if (args.Length == 3)
         {
-            await _paymentsService.Handler(callbackQuery.From.Id, callbackQuery.Message!.MessageId, args, user,
+            await paymentsService.Handler(callbackQuery.From.Id, callbackQuery.Message!.MessageId, args, user,
                 cancellationToken);
             return;
         }
 
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: TelegramInlineMenus.GetPaymentsText(_localizer, user, _paymentsOptions),
-            replyMarkup: TelegramInlineMenus.PaymentChoices(_localizer, _paymentsOptions),
+            text: TelegramInlineMenus.GetPaymentsText(localizer, user, _paymentsOptions),
+            replyMarkup: TelegramInlineMenus.PaymentChoices(localizer, _paymentsOptions),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
@@ -179,7 +161,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         {
             if (arg == user.ChatModel)
             {
-                await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
                 return;
             }
             
@@ -188,13 +170,13 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             if (args.Length == 2 && args[1] == "Begin")
             {
                 user.SwitchEnablingContext(true);
-                await _unitOfWork.CommitAsync();
+                await unitOfWork.CommitAsync();
                 
                 if (arg == ChatModel.Gpt4)
                 {
-                    await _botClient.AnswerCallbackQueryAsync(
+                    await botClient.AnswerCallbackQueryAsync(
                         callbackQuery.Id,
-                        _localizer.GetString("YouChoseChatModelAlert_" + user.ChatModel!.Value),
+                        localizer.GetString("YouChoseChatModelAlert_" + user.ChatModel!.Value),
                         showAlert: true,
                         cancellationToken: cancellationToken);
                 }
@@ -203,25 +185,25 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
                 return;
             }
             
-            await _unitOfWork.CommitAsync();
+            await unitOfWork.CommitAsync();
         }
 
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: _localizer.GetString("ChooseChatModel"),
-            replyMarkup: TelegramInlineMenus.SetChatModel(_localizer, user),
+            text: localizer.GetString("ChooseChatModel"),
+            replyMarkup: TelegramInlineMenus.SetChatModel(localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
 
     private async Task KeyboardMainMenu(CallbackQuery callbackQuery, string[] args, CancellationToken cancellationToken)
     {
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: _localizer.GetString("MainMenu"),
-            replyMarkup: TelegramInlineMenus.MainMenu(_localizer),
+            text: localizer.GetString("MainMenu"),
+            replyMarkup: TelegramInlineMenus.MainMenu(localizer),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
     }
@@ -229,11 +211,11 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
     private async Task KeyboardBalance(CallbackQuery callbackQuery, string[] args, TelegramUser user,
         CancellationToken cancellationToken)
     {
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: _localizer.GetString("Balance", user.Balance.ToString("N0")),
-            replyMarkup: TelegramInlineMenus.BalanceMenu(_localizer),
+            text: localizer.GetString("Balance", user.Balance.ToString("N0")),
+            replyMarkup: TelegramInlineMenus.BalanceMenu(localizer),
             cancellationToken: cancellationToken);
     }
 
@@ -253,22 +235,22 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
                 break;
             case "ClearContext":
                 if (user.ClearContext())
-                    await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, _localizer.GetString("DeletedContext"),
+                    await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, localizer.GetString("DeletedContext"),
                         cancellationToken: cancellationToken);
                 else
                     return;
                 break;
         }
 
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message!.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: TelegramInlineMenus.GetSettingsText(_localizer, user),
-            replyMarkup: TelegramInlineMenus.SettingsMenu(_localizer, user),
+            text: TelegramInlineMenus.GetSettingsText(localizer, user),
+            replyMarkup: TelegramInlineMenus.SettingsMenu(localizer, user),
             parseMode: ParseMode.Html,
             cancellationToken: cancellationToken);
 
-        await _unitOfWork.CommitAsync();
+        await unitOfWork.CommitAsync();
     }
 
     private async Task KeyboardLanguage(CallbackQuery callbackQuery, string[] args, TelegramUser user,
@@ -278,7 +260,7 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
         {
             if (lang == user.Language)
             {
-                await _botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
+                await botClient.AnswerCallbackQueryAsync(callbackQuery.Id, cancellationToken: cancellationToken);
                 return;
             }
 
@@ -286,28 +268,28 @@ public class BotOnCallbackQueryService : IBotOnCallbackQueryService
             TelegramMessageHelper.SetCulture(user.Language);
         }
 
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: _localizer.GetString("Language.Title"),
-            replyMarkup: TelegramInlineMenus.LanguageMenu(_localizer),
+            text: localizer.GetString("Language.Title"),
+            replyMarkup: TelegramInlineMenus.LanguageMenu(localizer),
             cancellationToken: cancellationToken);
 
-        await _unitOfWork.CommitAsync();
+        await unitOfWork.CommitAsync();
     }
 
     private async Task KeyboardHelp(CallbackQuery callbackQuery, string[] args, CancellationToken cancellationToken)
     {
-        await _botClient.EditMessageTextAsync(
+        await botClient.EditMessageTextAsync(
             chatId: callbackQuery.Message.Chat.Id,
             messageId: callbackQuery.Message.MessageId,
-            text: _localizer.GetString("HelpText"),
-            replyMarkup: TelegramInlineMenus.HelpMenu(_localizer),
+            text: localizer.GetString("HelpText"),
+            replyMarkup: TelegramInlineMenus.HelpMenu(localizer),
             cancellationToken: cancellationToken);
     }
 
     private void LogCallbackQuery(CallbackQuery callbackQuery, TelegramUser user)
     {
-        _logger.LogInformation("Receive callback from user: {UserName} | with data: {Data}", user.Username ?? user.Name.FullName(), callbackQuery.Data);
+        logger.LogInformation("Receive callback from user: {UserName} | with data: {Data}", user.Username ?? user.Name.FullName(), callbackQuery.Data);
     }
 }
