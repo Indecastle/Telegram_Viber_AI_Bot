@@ -123,7 +123,7 @@ public class OpenAiService : IOpenAiService
             resultDialog = resultDialog.Concat(
                 user.Messages.OrderBy(x => x.CreatedAt).ThenByDescending(x => x.IsMe)
                     .TakeWhile(x => x.CreatedAt < _dateTimeProvider.UtcNow)
-                    .Where(x => x.Type == MessageType.Text || user.ChatModel == ChatModel.Gpt4 )
+                    .Where(x => x.Type == MessageType.Text || user.ChatModel == ChatModel.Gpt4 && x.Type == MessageType.Photo )
                     .Select(x => new Message(x.IsMe ? Role.User : Role.Assistant, new List<Content>
                     {
                         new Content(x.Type == MessageType.Photo ? ContentType.ImageUrl : ContentType.Text, x.Text),

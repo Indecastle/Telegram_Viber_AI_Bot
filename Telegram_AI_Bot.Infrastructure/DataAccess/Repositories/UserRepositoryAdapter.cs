@@ -74,7 +74,6 @@ internal class UserRepositoryAdapter : IUserRepository
         ids = ids.Distinct().ToArray();
         if (!ids.Any())
             return Array.Empty<TelegramUser>();
-        
         return await _dbContext.Users.Where(x => ids.Contains(x.Id)).ToArrayAsync();
     }
 

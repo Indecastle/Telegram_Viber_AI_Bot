@@ -62,6 +62,8 @@
   "MyId": "My ID",
   "Wait": "Please wait...",
   "PaymentDescription": "You will buy tokens: {0}",
+  "UploadPhotoSuccess": "Photo has been uploaded",
+  "UploadPhotoNeedGpt4Vision": "GPT4 is required to upload images",
   "SystemMessageMenu": {
     "Button": "Change system message",
     "Title": "Current system message:\n{0}",

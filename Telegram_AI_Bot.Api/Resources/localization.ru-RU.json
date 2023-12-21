@@ -61,6 +61,8 @@
   "MyId": "Мой ID",
   "Wait": "Пожалуйста, подождите...",
   "PaymentDescription": "Вы купите токенов: {0}",
+  "UploadPhotoSuccess": "Фото было загружено",
+  "UploadPhotoNeedGpt4Vision": "Для загрузки изображений требуется GPT4",
   "SystemMessageMenu": {
     "Button": "Изменить системное сообщение",
     "Title": "Текущее системное сообщение:\n{0}",

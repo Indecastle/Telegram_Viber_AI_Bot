@@ -120,7 +120,31 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
         await botClient.DownloadFileAsync(file.FilePath, stream, cancellationToken);
 
         await ResizeImage(stream, cancellationToken);
-
+        string photoLink = await UploadImageToImgure(stream, cancellationToken);
+        
+        user.AddPhoto(photoLink, DateTimeOffset.UtcNow);
+        await allMessageRepository.AddAsync(new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, photoLink, MessageType.Photo, true, DateTimeOffset.UtcNow));
+        await unitOfWork.CommitAsync();
+        
+        await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: localizer.GetString("UploadPhotoSuccess"),
+            // replyMarkup: new ReplyKeyboardRemove(),
+            cancellationToken: cancellationToken);
+    }
+    
+    private async Task ResizeImage(MemoryStream stream, CancellationToken cancellationToken)
+    {
+        stream.Position = 0;
+        using var image = await Image.LoadAsync(stream, cancellationToken);
+        image.Mutate(x => x.Resize(512, 512));
+        stream.SetLength(0);
+        await image.SaveAsJpegAsync(stream, cancellationToken);
+        stream.Position = 0;
+    }
+    
+    private async Task<string> UploadImageToImgure(MemoryStream stream, CancellationToken cancellationToken)
+    {
         using var client = new HttpClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Client-ID", _openAiOptions.ImgurToken);
 
@@ -129,21 +153,7 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
         var response = await client.PostAsync("https://api.imgur.com/3/image", content);
         var responseResult = await response.Content.ReadAsStringAsync();
         var result = JsonConvert.DeserializeObject<dynamic>(responseResult);
-        string link = result!.data.link;
-        
-        user.AddPhoto(link, DateTimeOffset.UtcNow);
-        await allMessageRepository.AddAsync(new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, link, MessageType.Photo, true, DateTimeOffset.UtcNow));
-        await unitOfWork.CommitAsync();
-    }
-    
-    private static async Task ResizeImage(MemoryStream stream, CancellationToken cancellationToken)
-    {
-        stream.Position = 0;
-        using var image = await Image.LoadAsync(stream, cancellationToken);
-        image.Mutate(x => x.Resize(512, 512));
-        stream.SetLength(0);
-        await image.SaveAsJpegAsync(stream, cancellationToken);
-        stream.Position = 0;
+        return result!.data.link;
     }
 
     private async Task SendImmediately(Message message, TelegramUser storedUser, CancellationToken cancellationToken)
