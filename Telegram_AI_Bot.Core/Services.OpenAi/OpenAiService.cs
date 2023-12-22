@@ -1,7 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Images;
@@ -17,7 +18,7 @@ namespace Telegram_AI_Bot.Core.Services.OpenAi;
 
 public interface IOpenAiService
 {
-    Task<string> ChatHandler(string requestText, IOpenAiUser user, CancellationToken cancellationToken);
+    Task<ChatResponse> ChatHandler(string requestText, IOpenAiUser user, CancellationToken cancellationToken);
     IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user, CancellationToken cancellationToken);
     Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small);
     ChatRequest GetChatRequest(string requestText, IOpenAiUser user);
@@ -44,7 +45,7 @@ public class OpenAiService : IOpenAiService
         _api = new OpenAIClient(new OpenAIAuthentication(_openAiOptions.Token, _openAiOptions.OrganizationId));
     }
 
-    public async Task<string> ChatHandler(string requestText, IOpenAiUser user, CancellationToken cancellationToken)
+    public async Task<ChatResponse> ChatHandler(string requestText, IOpenAiUser user, CancellationToken cancellationToken)
     {
         requestText = requestText.Trim();
         
@@ -63,7 +64,7 @@ public class OpenAiService : IOpenAiService
         UserContextHandler(user, requestText, resultText);
         user.ReduceChatTokens(result.Usage.PromptTokens.Value*factorRequest + result.Usage.CompletionTokens.Value*factorResponse, _openAiOptions);
 
-        return resultText;
+        return result;
     }
 
     public async IAsyncEnumerable<ChatResponse> GetStreamingChat(string requestText, IOpenAiUser user, [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -82,7 +83,7 @@ public class OpenAiService : IOpenAiService
         {
             await foreach (var result in _api.ChatEndpoint.StreamCompletionEnumerableAsync(chatRequest, cancellationToken))
             {
-                if (result.FirstChoice.FinishReason == "stop" || result.FirstChoice.FinishDetails?.Type == "stop" || result.FirstChoice.FinishDetails?.Type == "max_tokens")
+                if (result.FirstChoice.FinishReason == "stop" || result.FirstChoice.FinishDetails?.Type != null)
                     yield break;
 
                 strBuilder.Append(result.FirstChoice);
@@ -130,8 +131,32 @@ public class OpenAiService : IOpenAiService
                     })).ToArray());
 
         resultDialog = resultDialog.Concat(new[] { newPromptMessage });
+        
+        var tools = new List<Tool>
+        {
+            new Function(
+                "get_image_based_user_prompt",
+                "Get a generated image based on the user's last request only if the user strictly and explicitly requests that image. (for example, create a cat). Analyze only the last user request",
+                new JsonObject
+                {
+                    ["type"] = "object",
+                    ["properties"] = new JsonObject
+                    {
+                        ["prompt"] = new JsonObject
+                        {
+                            ["type"] = "string",
+                            ["description"] = "user's prompt only if the user strictly and explicitly requests that image"
+                        },
+                    },
+                    ["required"] = new JsonArray { "prompt" }
+                })
+        };
 
-        return new ChatRequest(resultDialog, model: user.ChatModel!.Value, maxTokens: user.ChatModel == ChatModel.Gpt4 ? 4000 : 2000);
+        return new ChatRequest(resultDialog,
+            model: user.ChatModel!.Value,
+            tools: user.ChatModel == ChatModel.Gpt35 ? tools : null,
+            toolChoice: "auto",
+            maxTokens: user.ChatModel == ChatModel.Gpt4 ? 4000 : 2000);
     }
 
     public async Task<string?> ImageHandler(string requestText, IOpenAiUser user, ImageSize size = ImageSize.Small)

@@ -1,10 +1,12 @@
 using System.Net.Http.Headers;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
+using CryptoPay.Exceptions;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MoreLinq.Extensions;
-using Newtonsoft.Json;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -12,6 +14,7 @@ using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Models.Users;
 using Telegram_AI_Bot.Core.Ports.DataAccess;
 using Telegram_AI_Bot.Core.Services.OpenAi;
+using Telegram_AI_Bot.Core.Services.OpenAi.Tools;
 using Telegram_AI_Bot.Core.Telegram;
 
 namespace Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
@@ -120,7 +123,8 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
         await botClient.DownloadFileAsync(file.FilePath, stream, cancellationToken);
 
         await ResizeImage(stream, cancellationToken);
-        string photoLink = await UploadImageToImgure(stream, cancellationToken);
+        var tool = new TelegramOpenAiGenerationImageTool(botClient, _openAiOptions);
+        string photoLink = await tool.UploadImageToImgure(stream, cancellationToken);
         
         user.AddPhoto(photoLink, DateTimeOffset.UtcNow);
         await allMessageRepository.AddAsync(new OpenAiAllMessage(Guid.NewGuid(), user.Id, user.UserId, photoLink, MessageType.Photo, true, DateTimeOffset.UtcNow));
@@ -143,18 +147,7 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
         stream.Position = 0;
     }
     
-    private async Task<string> UploadImageToImgure(MemoryStream stream, CancellationToken cancellationToken)
-    {
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Client-ID", _openAiOptions.ImgurToken);
-
-        var content = new ByteArrayContent(stream.ToArray());
-
-        var response = await client.PostAsync("https://api.imgur.com/3/image", content);
-        var responseResult = await response.Content.ReadAsStringAsync();
-        var result = JsonConvert.DeserializeObject<dynamic>(responseResult);
-        return result!.data.link;
-    }
+    
 
     private async Task SendImmediately(Message message, TelegramUser storedUser, CancellationToken cancellationToken)
     {
@@ -164,19 +157,29 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
             // replyMarkup: new ReplyKeyboardRemove(),
             cancellationToken: cancellationToken);
         
-        var textResult = await openAiService.ChatHandler(message.Text, storedUser, cancellationToken);
-
-        if (string.IsNullOrEmpty(textResult))
-            await botClient.EditMessageTextAsync(
-                chatId: message.Chat.Id,
-                messageId: waitMessage.MessageId,
-                text: "bad request",
-                cancellationToken: cancellationToken);
-        else
-            await unitOfWork.CommitAsync();
+        var result = await openAiService.ChatHandler(message.Text, storedUser, cancellationToken);
+        var textResult = result.FirstChoice.Message.ToString()!.Trim();
         
-        await SendTextMessage(message, waitMessage.MessageId, textResult, cancellationToken);
-        await SaveMessage(storedUser, message.Text, textResult);
+        if (result.FirstChoice.Message.ToolCalls != null)
+        {
+            var tool = new TelegramOpenAiGenerationImageTool(botClient, _openAiOptions);
+            var prompt = tool.GetPromptFromJson(result.FirstChoice.Message.ToolCalls[0].Function.Arguments.ToString());
+            var photoLink = await tool.GenerateAndSendPhotoAsync(message, prompt, cancellationToken);
+            await botClient.DeleteMessageAsync(waitMessage.Chat.Id, waitMessage.MessageId, cancellationToken: cancellationToken);
+            await SaveMessage(storedUser, message.Text, photoLink);
+        }
+        else
+        {
+            if (string.IsNullOrEmpty(textResult))
+                await botClient.EditMessageTextAsync(
+                    chatId: message.Chat.Id,
+                    messageId: waitMessage.MessageId,
+                    text: "bad request",
+                    cancellationToken: cancellationToken);
+        
+            await SendTextMessage(message, waitMessage.MessageId, textResult, cancellationToken);
+            await SaveMessage(storedUser, message.Text, textResult);
+        }
     }
 
     private async Task SendTextMessage(Message? message, int waitMessageId, string? textResult, CancellationToken cancellationToken)
@@ -216,6 +219,8 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
 
         try
         {
+            (string Name, StringBuilder strBuilder)[] toolsResult = {};
+            
             await foreach (var result in openAiService.GetStreamingChat(message.Text!, storedUser, cancellationToken))
             {
                 if (waitMessage is null)
@@ -224,6 +229,22 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
                         chatId: message.Chat.Id,
                         text: "...",
                         cancellationToken: cancellationToken);
+                }
+                
+                if (result.FirstChoice.Delta.ToolCalls != null)
+                {
+                    if (toolsResult.Length == 0)
+                    {
+                        toolsResult = result.FirstChoice.Delta.ToolCalls
+                            .Select(x => (x.Function.Name, new StringBuilder())).ToArray();
+                    }
+
+                    for (int i = 0; i < result.FirstChoice.Delta.ToolCalls.Count; i++)
+                    {
+                        toolsResult[i].strBuilder.Append(result.FirstChoice.Delta.ToolCalls[i].Function.Arguments);
+                    }
+                    
+                    continue;
                 }
             
                 strBuilder.Append(result.FirstChoice);
@@ -253,9 +274,20 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
                         cancellationToken: cancellationToken);
                 }
             }
-            
-            await EditCurrentMessage(message.Chat.Id, waitMessage, strBuilder.ToString(), strBuilderBuff.Length > 0, cancellationToken);
-            await SaveMessage(storedUser, message.Text, strBuilderTotal.ToString());
+
+            if (toolsResult.Length != 0)
+            {
+                var tool = new TelegramOpenAiGenerationImageTool(botClient, _openAiOptions);
+                var prompt = tool.GetPromptFromJson(toolsResult[0].strBuilder.ToString());
+                var photoLink = await tool.GenerateAndSendPhotoAsync(message, prompt, cancellationToken);
+                await botClient.DeleteMessageAsync(waitMessage.Chat.Id, waitMessage.MessageId);
+                await SaveMessage(storedUser, message.Text, photoLink);
+            }
+            else
+            {
+                await EditCurrentMessage(message.Chat.Id, waitMessage, strBuilder.ToString(), strBuilderBuff.Length > 0, cancellationToken);
+                await SaveMessage(storedUser, message.Text, strBuilderTotal.ToString());
+            }
         }
         catch (NoEnoughBalance e)
         {
