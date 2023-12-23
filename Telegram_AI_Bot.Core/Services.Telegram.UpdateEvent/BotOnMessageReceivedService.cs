@@ -79,7 +79,7 @@ public class BotOnMessageReceivedService(
             return;
         }
 
-        await telegramOpenAiService.PhotoHandler(message, user, cancellationToken);
+        await telegramOpenAiService.UploadingPhotoHandler(message, user, cancellationToken);
     }
 
     

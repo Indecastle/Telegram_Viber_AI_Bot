@@ -1,11 +1,10 @@
 using System.Globalization;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
 using Microsoft.Extensions.Localization;
+using OpenAI;
 using OpenAI.Chat;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram_AI_Bot.Core.Models;
-using Telegram_AI_Bot.Core.Services.OpenAi;
-using Telegram.Bot.Types.Enums;
 using TiktokenSharp;
 
 namespace Telegram_AI_Bot.Core.Telegram;

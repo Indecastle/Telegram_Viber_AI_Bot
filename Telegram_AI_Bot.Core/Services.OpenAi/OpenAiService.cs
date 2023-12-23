@@ -1,18 +1,16 @@
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Images;
-using OpenAI.Models;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Telegram;
 using Telegram.Bot.Types.Enums;
 using TiktokenSharp;
 using InternalViberUser = Viber.Bot.NetCore.Models.ViberUser.User;
-using Role = OpenAI.Chat.Role;
+using Role = OpenAI.Role;
 
 namespace Telegram_AI_Bot.Core.Services.OpenAi;
 
@@ -154,8 +152,7 @@ public class OpenAiService : IOpenAiService
 
         return new ChatRequest(resultDialog,
             model: user.ChatModel!.Value,
-            tools: user.ChatModel == ChatModel.Gpt35 ? tools : null,
-            toolChoice: "auto",
+            // tools: user.ChatModel == ChatModel.Gpt35 ? tools : null,
             maxTokens: user.ChatModel == ChatModel.Gpt4 ? 4000 : 2000);
     }
 
@@ -163,10 +160,10 @@ public class OpenAiService : IOpenAiService
     {
         var images = await GetImages(requestText.Trim());
         user.ReduceImageTokens(size, _openAiOptions);
-        return images.FirstOrDefault();
+        return images.FirstOrDefault()?.Url;
     }
 
-    private async Task<string[]> GetImages(string prompt, int numberOfResults = 1, ImageSize size = ImageSize.Small)
+    private async Task<ImageResult[]> GetImages(string prompt, int numberOfResults = 1, ImageSize size = ImageSize.Small)
     {
         var results = await _api.ImagesEndPoint.GenerateImageAsync(prompt, numberOfResults, size);
         return results.ToArray();

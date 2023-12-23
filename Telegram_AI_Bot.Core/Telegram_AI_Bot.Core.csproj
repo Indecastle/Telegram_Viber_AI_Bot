@@ -11,7 +11,7 @@
         <PackageReference Include="Askmethat.Aspnet.JsonLocalizer" Version="4.0.1" />
         <PackageReference Include="CryptoPay" Version="1.1.3.6" />
         <PackageReference Include="morelinq" Version="3.4.1" />
-        <PackageReference Include="OpenAI-DotNet" Version="7.2.3" />
+        <PackageReference Include="OpenAI-DotNet" Version="7.4.4" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.0.2" />
         <PackageReference Include="Stripe.net" Version="41.11.0" />
         <PackageReference Include="Telegram.Bot" Version="19.0.0" />

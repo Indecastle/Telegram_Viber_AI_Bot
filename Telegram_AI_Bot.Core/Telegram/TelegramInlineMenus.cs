@@ -136,7 +136,7 @@ public static class TelegramInlineMenus
         }
         else
         {
-            str.AppendLine(l.GetString("SettingsText.ImageModel") + "dalle");
+            str.AppendLine(l.GetString("SettingsText.ImageModel") + "Fusionbrain");
         }
 
         return str.ToString();

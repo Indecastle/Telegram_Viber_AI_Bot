@@ -1,7 +1,7 @@
 using OpenAI.Chat;
 using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Telegram;
-using Role = OpenAI.Chat.Role;
+using Role = OpenAI.Role;
 
 namespace Telegram_AI_Bot.Tests;
 

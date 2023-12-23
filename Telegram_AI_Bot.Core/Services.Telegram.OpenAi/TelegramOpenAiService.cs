@@ -1,12 +1,9 @@
-using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using Askmethat.Aspnet.JsonLocalizer.Localizer;
-using CryptoPay.Exceptions;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MoreLinq.Extensions;
+using OpenAI.Images;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -22,7 +19,7 @@ namespace Telegram_AI_Bot.Core.Services.Telegram.OpenAi;
 public interface ITelegramOpenAiService
 {
     Task MessageHandler(Message? message, TelegramUser user, CancellationToken cancellationToken);
-    Task PhotoHandler(Message? message, TelegramUser user, CancellationToken cancellationToken);
+    Task UploadingPhotoHandler(Message? message, TelegramUser user, CancellationToken cancellationToken);
 }
 
 public class TelegramOpenAiService(ITelegramBotClient botClient,
@@ -76,54 +73,66 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
         //     TransactionScopeOption.RequiresNew,
         //     new TransactionOptions { IsolationLevel = IsolationLevel.RepeatableRead },
         //     TransactionScopeAsyncFlowOption.Enabled);
-        
-        if (user.SelectedMode == SelectedMode.Chat)
-        {
-            try
-            {
-                user.SetTyping(true);
-                await unitOfWork.CommitAsync();
-                
-                if (user.IsEnabledStreamingChat())
-                    await SendGradually(message, user, cancellationToken);
-                else
-                    await SendImmediately(message, user, cancellationToken);
-            }
-            catch (NoEnoughBalance e)
-            {
-                if (e.IsOnlyOverRequest)
-                    await botClient.SendTextMessageAsync(
-                        chatId: message.Chat.Id,
-                        text: localizer.GetString("NoBalance"),
-                        replyMarkup: TelegramInlineMenus.BalanceMenu(localizer, false),
-                        cancellationToken: cancellationToken);
-            }
-            finally
-            {
-                user.SetTyping(false);
-                await unitOfWork.CommitAsync();
-            }
-            
-        }
-        else
-        {
-            var url = await openAiService.ImageHandler(message.Text, user);
 
-            await botClient.SendPhotoAsync(
-                chatId: message.Chat.Id,
-                photo: new InputFileUrl(url),
-                cancellationToken: cancellationToken);
+        if (user.SelectedMode == SelectedMode.Chat)
+            await TextMessageHandler(message, user, cancellationToken);
+        else
+            await ImageMessageHandler(message, user, cancellationToken);
+    }
+
+    private async Task ImageMessageHandler(Message message, TelegramUser user, CancellationToken cancellationToken)
+    {
+        var waitMessage = await botClient.SendTextMessageAsync(
+            chatId: message.Chat.Id,
+            text: localizer.GetString("Wait"),
+            cancellationToken: cancellationToken);
+        
+        // var url = await openAiService.ImageHandler(message.Text, user);
+        var tool = new TelegramOpenAiGenerationImageTool(botClient, _openAiOptions);
+        var photoLink = await tool.GenerateAndSendPhotoAsync(message, message.Text, cancellationToken);
+        await SaveMessage(user, message.Text, $"image: {photoLink}");
+        user.ReduceImageTokens(ImageSize.Small, _openAiOptions);
+        await unitOfWork.CommitAsync();
+
+        await botClient.DeleteMessageAsync(waitMessage.Chat, waitMessage.MessageId, cancellationToken);
+    }
+
+    private async Task TextMessageHandler(Message message, TelegramUser user, CancellationToken cancellationToken)
+    {
+        try
+        {
+            user.SetTyping(true);
+            await unitOfWork.CommitAsync();
+                
+            if (user.IsEnabledStreamingChat())
+                await SendGradually(message, user, cancellationToken);
+            else
+                await SendImmediately(message, user, cancellationToken);
+        }
+        catch (NoEnoughBalance e)
+        {
+            if (e.IsOnlyOverRequest)
+                await botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: localizer.GetString("NoBalance"),
+                    replyMarkup: TelegramInlineMenus.BalanceMenu(localizer, false),
+                    cancellationToken: cancellationToken);
+        }
+        finally
+        {
+            user.SetTyping(false);
+            await unitOfWork.CommitAsync();
         }
     }
 
-    public async Task PhotoHandler(Message? message, TelegramUser user, CancellationToken cancellationToken)
+    public async Task UploadingPhotoHandler(Message? message, TelegramUser user, CancellationToken cancellationToken)
     {
         var file = await botClient.GetFileAsync(message.Photo[^1].FileId, cancellationToken: cancellationToken);
         using var stream = new MemoryStream((int)file.FileSize);
         await botClient.DownloadFileAsync(file.FilePath, stream, cancellationToken);
-
-        await ResizeImage(stream, cancellationToken);
+        
         var tool = new TelegramOpenAiGenerationImageTool(botClient, _openAiOptions);
+        await tool.ResizeImage(stream, cancellationToken);
         string photoLink = await tool.UploadImageToImgure(stream, cancellationToken);
         
         user.AddPhoto(photoLink, DateTimeOffset.UtcNow);
@@ -136,18 +145,6 @@ public class TelegramOpenAiService(ITelegramBotClient botClient,
             // replyMarkup: new ReplyKeyboardRemove(),
             cancellationToken: cancellationToken);
     }
-    
-    private async Task ResizeImage(MemoryStream stream, CancellationToken cancellationToken)
-    {
-        stream.Position = 0;
-        using var image = await Image.LoadAsync(stream, cancellationToken);
-        image.Mutate(x => x.Resize(512, 512));
-        stream.SetLength(0);
-        await image.SaveAsJpegAsync(stream, cancellationToken);
-        stream.Position = 0;
-    }
-    
-    
 
     private async Task SendImmediately(Message message, TelegramUser storedUser, CancellationToken cancellationToken)
     {

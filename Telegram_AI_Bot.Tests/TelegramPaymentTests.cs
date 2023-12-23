@@ -1,9 +1,5 @@
 using CryptoPay.Types;
-using OpenAI.Chat;
-using Telegram_AI_Bot.Core.Models;
 using Telegram_AI_Bot.Core.Services.Telegram.Payments;
-using Telegram_AI_Bot.Core.Telegram;
-using Role = OpenAI.Chat.Role;
 
 namespace Telegram_AI_Bot.Tests;
 
