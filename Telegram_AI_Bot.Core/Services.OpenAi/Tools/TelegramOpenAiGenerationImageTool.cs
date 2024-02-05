@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Refit;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Types;
@@ -91,7 +92,7 @@ public class TelegramOpenAiGenerationImageTool(ITelegramBotClient botClient, Ope
 
     private async Task<string> GetGeneratedImageAsync(HttpClient httpClient, string uuid)
     {
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 100; i++)
         {
             var resultStatus =
                 await httpClient.GetAsync("https://api-key.fusionbrain.ai/key/api/v1/text2image/status/" + uuid);
@@ -102,9 +103,9 @@ public class TelegramOpenAiGenerationImageTool(ITelegramBotClient botClient, Ope
                 return resultStatusJson["images"]![0]!.ToString();
             }
 
-            await Task.Delay(1000);
+            await Task.Delay(2000);
         }
 
-        return String.Empty;
+        throw new ApiRequestException("Cant find image");
     }
 }
